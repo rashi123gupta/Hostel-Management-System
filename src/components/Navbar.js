@@ -1,15 +1,16 @@
-import "./Navbar.css";
-import { Link } from "react-router-dom";
+import React from 'react';
+import './Navbar.css';
 
-export default function Navbar() {
+function Navbar({ setView }) {
   return (
     <nav className="navbar">
-      <div className="nav-brand">HMS</div>
-      <ul className="nav-links">
-        <li><Link to="/">Dashboard</Link></li>
-        <li><Link to="/leave">Leave</Link></li>
-        <li><Link to="/complaints">Complaints</Link></li>
-      </ul>
+      <div className="navbar-title">HMS</div>
+      {/* <div className="navbar-links">
+        <span onClick={() => setView('login')} className="nav-link">Login</span>
+        <span onClick={() => setView('signup')} className="nav-link">Signup</span>
+      </div> */}
     </nav>
   );
 }
+
+export default Navbar;
