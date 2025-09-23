@@ -1,32 +1,49 @@
-// import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-// import app from "./firebase";
+// src/services/authService.js
+// This file contains all functions related to Firebase Authentication.
 
-// const auth = getAuth(app);
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut 
+} from "firebase/auth";
+import { auth } from "./firebase";
+import { createUserProfile } from "./userService";
 
-// export const loginWithEmailAndPassword = async (email, password) => {
-//   try {
-//     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-//     const user = userCredential.user;
-//     return { success: true, user };
-//   } catch (error) {
-//     return { success: false, error: error.message };
-//   }
-// };
-
-export const loginWithEmailAndPassword = async (email, password) => {
-  await new Promise(resolve => setTimeout(resolve, 500));
+/**
+ * Signs up a new user with email and password and creates their profile in Firestore.
+ * @param {string} email - The user's email.
+ * @param {string} password - The user's password.
+ * @param {object} additionalData - Additional profile data (e.g., { name, rollNo }).
+ * @returns {Promise<UserCredential>} The user credential object on successful signup.
+ */
+export const signUp = async (email, password, additionalData) => {
+  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  const user = userCredential.user;
   
-  const dummyStudentEmail = 'student@test.com';
-  const dummyPassword = 'password';
+  // After creating the user in Auth, create their profile document in Firestore
+  await createUserProfile(user.uid, {
+    email,
+    ...additionalData, // Spreads fields like name, rollNo, hostelNo, etc.
+  });
 
-  if (email === dummyStudentEmail && password === dummyPassword) {
-    const dummyUser = {
-      uid: 'dummy-student-id',
-      email: dummyStudentEmail,
-      role: 'student'
-    };
-    return { success: true, user: dummyUser };
-  } else {
-    return { success: false, error: 'Invalid email or password.' };
-  }
+  return userCredential;
 };
+
+/**
+ * Logs in a user with their email and password.
+ * @param {string} email - The user's email.
+ * @param {string} password - The user's password.
+ * @returns {Promise<UserCredential>} The user credential object on successful login.
+ */
+export const logIn = (email, password) => {
+  return signInWithEmailAndPassword(auth, email, password);
+};
+
+/**
+ * Logs out the currently authenticated user.
+ * @returns {Promise<void>}
+ */
+export const logOut = () => {
+  return signOut(auth);
+};
+
