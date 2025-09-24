@@ -1,10 +1,10 @@
 // src/app/login/page.jsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { logIn } from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
 
-function LoginPage() {
+export default function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,57 +17,63 @@ function LoginPage() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
-    
+    setError('');
     try {
       await logIn(formData.email, formData.password);
-      // On successful login, the AuthContext's onAuthStateChanged listener
-      // will update the state, and the router will handle the redirect.
-      navigate('/dashboard'); // Redirect to a generic dashboard route
+      // **THE FIX IS HERE**
+      // Navigate to the root. The App component will handle the role-based redirect.
+      navigate('/'); 
     } catch (err) {
-      setError('Failed to log in. Please check your credentials.');
+      setError('Failed to log in. Please check your email and password.');
       console.error(err);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
-  
-  // If user is already logged in, redirect them
+
+  // If user is already logged in, redirect them from the login page
   if (currentUser) {
-    navigate('/dashboard');
+    navigate('/');
     return null; // Render nothing while redirecting
   }
 
   return (
     <div className="auth-container">
-      <h2>Login</h2>
+      <h2>Hostel Management Login</h2>
       <form onSubmit={handleLogin} className="auth-form">
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-          className="form-input"
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-          className="form-input"
-        />
+        <div className="form-group">
+          <label htmlFor="email">Email Address</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            className="form-input"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            className="form-input"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        {error && <p className="error-message">{error}</p>}
         <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
+          {loading ? 'Logging In...' : 'Login'}
         </button>
       </form>
-      {error && <p className="message error">{error}</p>}
+      <p className="auth-switch">
+        Don't have an account? <Link to="/signup">Sign Up</Link>
+      </p>
     </div>
   );
 }
 
-export default LoginPage;

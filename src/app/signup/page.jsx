@@ -1,20 +1,22 @@
 // src/app/signup/page.jsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { signUp } from '../../services/authService';
+import { useAuth } from '../../context/AuthContext';
 
-function SignupPage() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    rollNo: '',
-    hostelNo: '',
-    roomNo: ''
+export default function SignupPage() {
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    email: '', 
+    password: '', 
+    rollNo: '', 
+    hostelNo: '', 
+    roomNo: '' 
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -22,39 +24,73 @@ function SignupPage() {
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
-    
-    const { email, password, ...profileData } = formData;
+    setError('');
+
+    // Prepare user data for Firestore profile
+    const profileData = {
+      name: formData.name,
+      email: formData.email,
+      rollNo: formData.rollNo,
+      hostelNo: formData.hostelNo,
+      roomNo: formData.roomNo,
+    };
 
     try {
-      await signUp(email, password, profileData);
-      navigate('/dashboard'); // Redirect to dashboard after successful signup
+      await signUp(formData.email, formData.password, profileData);
+      // **THE FIX IS HERE**
+      // Navigate to the root. The App component will handle the role-based redirect.
+      navigate('/');
     } catch (err) {
-      setError('Failed to create an account. The email might already be in use.');
+      setError('Failed to create an account. The email may already be in use.');
       console.error(err);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
+  
+  // If user is already logged in, redirect them from the signup page
+  if (currentUser) {
+    navigate('/');
+    return null; // Render nothing while redirecting
+  }
 
   return (
     <div className="auth-container">
-      <h2>Sign Up</h2>
+      <h2>Create Student Account</h2>
       <form onSubmit={handleSignup} className="auth-form">
-        <input type="text" name="name" placeholder="Full Name" onChange={handleChange} required className="form-input" />
-        <input type="email" name="email" placeholder="Email" onChange={handleChange} required className="form-input" />
-        <input type="password" name="password" placeholder="Password (min. 6 characters)" onChange={handleChange} required className="form-input" />
-        <input type="text" name="rollNo" placeholder="Roll Number" onChange={handleChange} className="form-input" />
-        <input type="text" name="hostelNo" placeholder="Hostel Number" onChange={handleChange} className="form-input" />
-        <input type="text" name="roomNo" placeholder="Room Number" onChange={handleChange} className="form-input" />
+        <div className="form-group">
+          <label htmlFor="name">Full Name</label>
+          <input id="name" name="name" type="text" className="form-input" value={formData.name} onChange={handleChange} required />
+        </div>
+        <div className="form-group">
+          <label htmlFor="email">Email Address</label>
+          <input id="email" name="email" type="email" className="form-input" value={formData.email} onChange={handleChange} required />
+        </div>
+        <div className="form-group">
+          <label htmlFor="password">Password (min. 6 characters)</label>
+          <input id="password" name="password" type="password" className="form-input" value={formData.password} onChange={handleChange} required />
+        </div>
+        <div className="form-group">
+          <label htmlFor="rollNo">Roll Number</label>
+          <input id="rollNo" name="rollNo" type="text" className="form-input" value={formData.rollNo} onChange={handleChange} required />
+        </div>
+        <div className="form-group">
+          <label htmlFor="hostelNo">Hostel Number</label>
+          <input id="hostelNo" name="hostelNo" type="text" className="form-input" value={formData.hostelNo} onChange={handleChange} required />
+        </div>
+        <div className="form-group">
+          <label htmlFor="roomNo">Room Number</label>
+          <input id="roomNo" name="roomNo" type="text" className="form-input" value={formData.roomNo} onChange={handleChange} required />
+        </div>
+        {error && <p className="error-message">{error}</p>}
         <button type="submit" className="btn-primary" disabled={loading}>
           {loading ? 'Creating Account...' : 'Sign Up'}
         </button>
       </form>
-      {error && <p className="message error">{error}</p>}
+      <p className="auth-switch">
+        Already have an account? <Link to="/login">Login</Link>
+      </p>
     </div>
   );
 }
 
-export default SignupPage;
