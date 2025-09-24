@@ -23,13 +23,30 @@ function Navbar() {
       <div className="navbar-links">
         {currentUser ? (
           <>
-            {userProfile?.role === 'admin' && <Link to="/admin/dashboard">Admin Dash</Link>}
-            {userProfile?.role === 'student' && <Link to="/student/dashboard">Student Dash</Link>}
-            <Link to="/profile">Profile</Link>
+            {/* --- Admin Links --- */}
+            {userProfile?.role === 'admin' && (
+              <>
+                <Link to="/admin/dashboard">Dashboard</Link>
+                <Link to="/admin/users">Users</Link>
+                <Link to="/admin/leaves">Leaves</Link>
+                <Link to="/admin/complaints">Complaints</Link>
+              </>
+            )}
+
+            {/* --- Student Links --- */}
+            {userProfile?.role === 'student' && (
+              <>
+                <Link to="/student/dashboard">Dashboard</Link>
+                <Link to="/student/leaves">Leaves</Link>
+                <Link to="/student/complaints">Complaints</Link>
+              </>
+            )}
+            
             <button onClick={handleLogout} className="btn-logout">Logout</button>
           </>
         ) : (
           <>
+            {/* --- Logged Out Links --- */}
             <Link to="/login">Login</Link>
             <Link to="/signup">Sign Up</Link>
           </>
