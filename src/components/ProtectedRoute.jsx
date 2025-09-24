@@ -1,33 +1,31 @@
 // src/components/ProtectedRoute.jsx
-// This component protects routes that require authentication and, optionally, a specific role.
-
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const ProtectedRoute = ({ children, role }) => {
+// This component is now more robust and handles the loading state.
+export default function ProtectedRoute({ children, adminOnly = false }) {
   const { currentUser, userProfile, loading } = useAuth();
-  const location = useLocation();
 
+  // 1. Wait until the authentication state is fully loaded
   if (loading) {
-    // Show a loading indicator while we check the auth state
-    return <div>Loading...</div>;
+    // While loading, you can show a loading spinner or just a blank page briefly.
+    // Returning null is safe and prevents rendering children prematurely.
+    return <div>Loading session...</div>;
   }
 
+  // 2. If loading is finished and there's no user, redirect to login
   if (!currentUser) {
-    // If user is not logged in, redirect them to the login page
-    // We also save the location they were trying to access
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" />;
   }
 
-  if (role && userProfile?.role !== role) {
-    // If the route requires a specific role and the user doesn't have it,
-    // redirect them to their default dashboard or an unauthorized page.
-    return <Navigate to="/dashboard" replace />;
+  // 3. If it's an admin-only route, check the user's role
+  if (adminOnly && userProfile?.role !== 'admin') {
+    // If a non-admin tries to access, redirect them to their dashboard
+    return <Navigate to="/student/dashboard" />;
   }
 
-  // If all checks pass, render the component the user was trying to access
+  // 4. If all checks pass, render the component
   return children;
-};
+}
 
-export default ProtectedRoute;
