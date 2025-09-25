@@ -96,9 +96,9 @@ body {
 .form-group label {
   font-weight: 600;
   color: #4a5568;
-  flex-basis: 120px; /* Adjust as needed */
+  flex-basis: 120px;
   flex-shrink: 0;
-  text-align: left;
+  text-align: right;
 }
 
 .form-input {
@@ -124,9 +124,7 @@ body {
 
 /* --- 4. General Buttons --- */
 .btn-primary {
-  float: right;
   padding: 0.8rem;
-  margin: 8px;
   border: none;
   background-color: #3498db;
   color: white;
@@ -150,7 +148,7 @@ body {
 .page-container {
   max-width: 1200px;
   margin: 2rem auto;
-  padding: 0 2rem; /* Adjusted padding */
+  padding: 0 2rem;
 }
 
 .page-header {
@@ -179,9 +177,29 @@ body {
 }
 
 .user-profile-container {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 2rem;
+}
+
+.btn-edit-profile {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background-color: #f0f4f8;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-edit-profile:hover {
+  background-color: #e2e8f0;
+  color: #2d3748;
 }
 
 .profile-image img {
@@ -314,16 +332,24 @@ body {
   width: 100%; padding: 0.5rem; font-size: 1rem; border: 1px solid #ccc;
   border-radius: 5px; margin-bottom: 1rem; box-sizing: border-box;
 }
+
+/* CORRECTED: Styles for modal forms and actions */
+.modal-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
 .modal-actions {
   display: flex;
-  justify-content: flex-end; /* Aligns buttons to the right */
-  gap: 0.75rem; /* Adds space between buttons */
-  margin-top: 1.5rem;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 2rem; /* Increased margin for more space */
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0; /* Visual separator line */
 }
 
 .btn-close-modal {
-  float: right;
-  margin: 8px;
   padding: 0.8rem;
   border: none;
   background-color: #e74c3c; /* Red color */
@@ -339,7 +365,6 @@ body {
   background-color: #c0392b; /* Darker red on hover */
 }
 
-/* Make save button same size in modal */
 .modal-actions .btn-primary {
   flex-grow: 1;
 }
@@ -353,27 +378,21 @@ body {
 .error-message { background-color: #fbe2e2; color: #c0392b; }
 .loading { font-weight: bold; color: #2c3e50; }
 
-
-
-/* 10. Dashboard summary grid styles */
+/* --- 10. Dashboard summary grid styles --- */
 .summary-grid {
   display: flex;
   justify-content: space-between;
   gap: 1.5rem;
-  /* margin-top: 0.5rem; */
-  flex-wrap: wrap; /* Allows wrapping on smaller screens */
+  margin-top: 1.5rem;
 }
 
 .summary-item {
   text-align: center;
-  flex-grow: 1;
+  flex: 1 1 0; /* Allows items to grow and shrink equally */
   padding: 1rem;
   background-color: #f0f4f8;
   border: 0.5px solid #e2e8f0;
   border-radius: 10px;
-  box-shadow: black;
-  max-width: 250px; /* Ensure a minimum width */
-  /* max-height: 170px; */
 }
 
 .summary-item p {
@@ -393,3 +412,4 @@ body {
 .summary-item:nth-child(2) { background-color: #fffbe6; }
 .summary-item:nth-child(3) { background-color: #e6ffec; }
 .summary-item:nth-child(4) { background-color: #ffcccc; }
+
