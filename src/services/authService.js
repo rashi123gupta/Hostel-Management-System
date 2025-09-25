@@ -1,47 +1,55 @@
-// src/services/authService.js
-// This file contains all functions related to Firebase Authentication.
-
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signOut 
-} from "firebase/auth";
-import { auth } from "./firebase";
-import { createUserProfile } from "./userService";
+} from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from './firebase';
 
 /**
- * Signs up a new user with email and password and creates their profile in Firestore.
- * @param {string} email - The user's email.
- * @param {string} password - The user's password.
- * @param {object} additionalData - Additional profile data (e.g., { name, rollNo }).
- * @returns {Promise<UserCredential>} The user credential object on successful signup.
+ * Signs up a new user with email, password, and additional profile data.
+ * This function now correctly adds the 'role' and 'createdAt' fields.
  */
 export const signUp = async (email, password, additionalData) => {
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  const user = userCredential.user;
-  
-  // After creating the user in Auth, create their profile document in Firestore
-  await createUserProfile(user.uid, {
-    email,
-    ...additionalData, // Spreads fields like name, rollNo, hostelNo, etc.
-  });
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
-  return userCredential;
+    // Create the user's profile document in Firestore
+    await setDoc(doc(db, "users", user.uid), {
+      ...additionalData,         // name, rollNo, hostelNo, roomNo
+      email: user.email,
+      role: "student",          // <-- FIXED: Default role is now added
+      createdAt: new Date(),    // <-- FIXED: Creation timestamp is now added
+    });
+
+    return { success: true, user };
+  } catch (error) {
+    // Provide a more user-friendly error message
+    const errorMessage = error.message.includes('auth/email-already-in-use')
+      ? 'This email address is already in use.'
+      : 'Failed to create account. Please try again.';
+    console.error("Signup Error:", error.message);
+    return { success: false, error: errorMessage };
+  }
 };
 
 /**
  * Logs in a user with their email and password.
- * @param {string} email - The user's email.
- * @param {string} password - The user's password.
- * @returns {Promise<UserCredential>} The user credential object on successful login.
  */
-export const logIn = (email, password) => {
-  return signInWithEmailAndPassword(auth, email, password);
+export const logIn = async (email, password) => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    return { success: true, user: userCredential.user };
+  } catch (error) {
+    const errorMessage = 'Invalid email or password. Please try again.';
+    console.error("Login Error:", error.message);
+    return { success: false, error: errorMessage };
+  }
 };
 
 /**
  * Logs out the currently authenticated user.
- * @returns {Promise<void>}
  */
 export const logOut = () => {
   return signOut(auth);

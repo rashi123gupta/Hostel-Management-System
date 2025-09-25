@@ -13,7 +13,7 @@ export const addComplaint = async (studentId, complaintData) => {
     await addDoc(collection(db, 'complaints'), {
       studentId: studentId,
       description: complaintData.description,
-      status: 'pending', // Default status
+      status: 'Pending', // Default status
       createdAt: serverTimestamp(),
       resolutionDetails: '-', // Default resolution details
     });

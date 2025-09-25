@@ -117,11 +117,16 @@ function AdminComplaints() {
                       <option value="Resolved">Resolved</option>
                     </select>
                   </td>
-                  <td className="actions-cell">
-                    <button onClick={() => openModal(complaint)} className="btn-add-remarks">
-                      Remarks
-                    </button>
-                  </td>
+                  <td>
+                      <div className="actions-cell">
+                        <span>
+                          {(remarks[complaint.id] && remarks[complaint.id] !== '-') 
+                            ? `${remarks[complaint.id].substring(0, 15)}...` 
+                            : '-'}
+                        </span>
+                        <button onClick={() => openModal(complaint.id)} className="btn-add-remarks">Edit</button>
+                      </div>
+                    </td>
                 </tr>
               ))}
             </tbody>

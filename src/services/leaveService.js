@@ -34,7 +34,7 @@ export const addLeave = async (studentId, leaveData) => {
       fromDate: formatDateToDDMMYYYY(leaveData.fromDate),
       toDate: formatDateToDDMMYYYY(leaveData.toDate),
       reason: leaveData.reason,
-      status: 'pending', // Use lowercase status
+      status: 'Pending', 
       appliedAt: serverTimestamp(),
       adminRemarks: '-', // Set initial admin remarks
     });
