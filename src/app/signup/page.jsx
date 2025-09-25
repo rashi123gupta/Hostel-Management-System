@@ -23,7 +23,7 @@ function SignupPage() {
   const handleSignup = async (e) => {
     e.preventDefault();
     // Basic validation
-    if (!formData.name || !formData.email || !formData.password || !formData.rollNo) {
+    if (!formData.name || !formData.email || !formData.password) {
       setError('Please fill out all required fields.');
       return;
     }
@@ -66,7 +66,7 @@ function SignupPage() {
         </div>
         <div className="form-group">
           <label htmlFor="rollNo">Roll No</label>
-          <input type="text" name="rollNo" id="rollNo" value={formData.rollNo} onChange={handleChange} className="form-input" required />
+          <input type="text" name="rollNo" id="rollNo" value={formData.rollNo} onChange={handleChange} className="form-input" />
         </div>
         <div className="form-group">
           <label htmlFor="hostelNo">Hostel No</label>
