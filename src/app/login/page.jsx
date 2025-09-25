@@ -39,7 +39,7 @@ export default function LoginPage() {
 
   return (
     <div className="auth-container">
-      <h2>Hostel Management Login</h2>
+      <h2>Login</h2>
       <form onSubmit={handleLogin} className="auth-form">
         <div className="form-group">
           <label htmlFor="email">Email Address</label>

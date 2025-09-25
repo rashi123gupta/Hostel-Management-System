@@ -1,22 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getAllComplaints, updateComplaintStatus } from '../../../services/complaintService';
 import { getAllUsers } from '../../../services/userService';
 
 function AdminComplaints() {
+  // State for the raw data fetched from Firestore
   const [complaints, setComplaints] = useState([]);
   const [users, setUsers] = useState({});
+  
+  // Local state to manage UI changes before saving
+  const [complaintStatus, setComplaintStatus] = useState({});
   const [remarks, setRemarks] = useState({});
+
+  // State for modal and loading/error handling
   const [showModal, setShowModal] = useState(false);
-  const [currentComplaint, setCurrentComplaint] = useState(null);
+  const [currentComplaintId, setCurrentComplaintId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchComplaintsData = async () => {
+  const fetchComplaintsData = useCallback(async () => {
     setLoading(true);
     try {
       const [fetchedComplaints, fetchedUsers] = await Promise.all([
         getAllComplaints(),
-        getAllUsers()
+        getAllUsers(),
       ]);
 
       const userMap = fetchedUsers.reduce((map, user) => {
@@ -27,10 +33,11 @@ function AdminComplaints() {
       setComplaints(fetchedComplaints);
       setUsers(userMap);
       
-      const initialRemarks = fetchedComplaints.reduce((acc, complaint) => {
-        acc[complaint.id] = complaint.resolutionDetails || '';
-        return acc;
-      }, {});
+      // Initialize local state from the fetched data
+      const initialStatus = fetchedComplaints.reduce((acc, c) => ({ ...acc, [c.id]: c.status }), {});
+      const initialRemarks = fetchedComplaints.reduce((acc, c) => ({ ...acc, [c.id]: c.resolutionDetails || '' }), {});
+      
+      setComplaintStatus(initialStatus);
       setRemarks(initialRemarks);
 
     } catch (err) {
@@ -39,42 +46,49 @@ function AdminComplaints() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchComplaintsData();
-  }, []);
+  }, [fetchComplaintsData]);
 
   const handleStatusChange = async (complaintId, newStatus) => {
+    // Immediately update the local state for a responsive UI
+    setComplaintStatus(prev => ({ ...prev, [complaintId]: newStatus }));
     try {
-      const complaint = complaints.find(c => c.id === complaintId);
-      await updateComplaintStatus(complaintId, newStatus, complaint.resolutionDetails);
-      // Refresh data to show changes
-      fetchComplaintsData(); 
+      // Send the update to Firebase with the new status and existing remarks
+      await updateComplaintStatus(complaintId, newStatus, remarks[complaintId] || '-');
+      alert('Status updated successfully!');
     } catch (err) {
+      // If the update fails, revert the local state
+      setComplaintStatus(prev => ({ ...prev, [complaintId]: complaints.find(c => c.id === complaintId).status }));
       console.error("Error updating complaint status:", err);
-      setError('Failed to update complaint status.');
+      setError('Failed to update status.');
     }
   };
 
-  const openModal = (complaint) => {
-    setCurrentComplaint(complaint);
+  const openModal = (complaintId) => {
+    setCurrentComplaintId(complaintId);
     setShowModal(true);
   };
 
+  // This function is only for the text area inside the modal
+  const handleRemarksChange = (e) => {
+    setRemarks(prev => ({ ...prev, [currentComplaintId]: e.target.value }));
+  };
+
+  // This function saves the remarks from the modal
   const handleSaveRemarks = async () => {
-    if (!currentComplaint) return;
+    if (!currentComplaintId) return;
     
     try {
-      await updateComplaintStatus(
-        currentComplaint.id,
-        currentComplaint.status,
-        remarks[currentComplaint.id]
-      );
+      const currentStatus = complaintStatus[currentComplaintId];
+      const newRemarks = remarks[currentComplaintId];
+
+      await updateComplaintStatus(currentComplaintId, currentStatus, newRemarks);
+      
       setShowModal(false);
-      setCurrentComplaint(null);
-      // Refresh data
-      fetchComplaintsData(); 
+      alert('Remarks saved successfully!');
     } catch (err) {
       console.error("Error saving remarks:", err);
       setError('Failed to save remarks.');
@@ -91,44 +105,47 @@ function AdminComplaints() {
       </div>
       <div className="card">
         {complaints.length > 0 ? (
-          <table className="user-table">
+          <table className="data-table">
             <thead>
               <tr>
                 <th>Student Name</th>
                 <th>Roll No</th>
                 <th>Description</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th>Resolution Details</th>
               </tr>
             </thead>
             <tbody>
-              {complaints.map(complaint => (
-                <tr key={complaint.id}>
-                  <td>{users[complaint.studentId]?.name || 'N/A'}</td>
-                  <td>{users[complaint.studentId]?.rollNo || 'N/A'}</td>
-                  <td>{complaint.description}</td>
-                  <td>
-                    <select
-                      value={complaint.status}
-                      onChange={(e) => handleStatusChange(complaint.id, e.target.value)}
-                      className={`status-select status-${complaint.status.toLowerCase()}`}
-                    >
-                      <option value="Pending">Pending</option>
-                      <option value="Resolved">Resolved</option>
-                    </select>
-                  </td>
-                  <td>
+              {complaints.map(complaint => {
+                const student = users[complaint.studentId];
+                const displayRemarks = (remarks[complaint.id] && remarks[complaint.id] !== '-') 
+                  ? `${remarks[complaint.id].substring(0, 15)}...` 
+                  : '-';
+
+                return (
+                  <tr key={complaint.id}>
+                    <td>{student?.name || 'N/A'}</td>
+                    <td>{student?.rollNo || 'N/A'}</td>
+                    <td>{complaint.description}</td>
+                    <td>
+                      <select
+                        value={complaintStatus[complaint.id] || complaint.status}
+                        onChange={(e) => handleStatusChange(complaint.id, e.target.value)}
+                        className={`status-select status-${(complaintStatus[complaint.id] || complaint.status).toLowerCase()}`}
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Resolved">Resolved</option>
+                      </select>
+                    </td>
+                    <td>
                       <div className="actions-cell">
-                        <span>
-                          {(remarks[complaint.id] && remarks[complaint.id] !== '-') 
-                            ? `${remarks[complaint.id].substring(0, 15)}...` 
-                            : '-'}
-                        </span>
+                        <span>{displayRemarks}</span>
                         <button onClick={() => openModal(complaint.id)} className="btn-add-remarks">Edit</button>
                       </div>
                     </td>
-                </tr>
-              ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         ) : (
@@ -142,8 +159,8 @@ function AdminComplaints() {
             <textarea
               className="remarks-textarea"
               rows="4"
-              value={remarks[currentComplaint.id] || ''}
-              onChange={(e) => setRemarks({...remarks, [currentComplaint.id]: e.target.value})}
+              value={remarks[currentComplaintId] || ''}
+              onChange={handleRemarksChange}
               placeholder="Enter your remarks here..."
             ></textarea>
             <div className="modal-actions">
@@ -158,3 +175,4 @@ function AdminComplaints() {
 }
 
 export default AdminComplaints;
+
