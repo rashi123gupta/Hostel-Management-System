@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { getStudentComplaints } from '../../../services/complaintService';
 import { getStudentLeaves } from '../../../services/leaveService';
+import EditProfileModal from '../../../components/EditProfileModal';
 import '../../../styles/global.css';
 
 function StudentDashboard() {
   const { userProfile } = useAuth();
   const [complaints, setComplaints] = useState({ total: 0, pending: 0, completed: 0 });
   const [leaves, setLeaves] = useState({ totalRequested: 0, approved: 0, rejected: 0, pending: 0 });
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -52,25 +54,12 @@ function StudentDashboard() {
           <h2 className="user-name">{userProfile?.name}</h2>
           <p className="user-info">Roll Number: {userProfile?.rollNo}</p>
           <p className="user-info">Email: {userProfile?.email}</p>
+          <p className="user-info">Hostel Number: {userProfile?.hostelNo}</p>
+          <p className="user-info">Room Number: {userProfile?.roomNo}</p>
         </div>
-      </div>
-
-      <div className="summary-card card">
-        <h3>Complaints</h3>
-        <div className="summary-grid">
-          <div className="summary-item card">
-            <p>Total</p>
-            <h4>{complaints.total}</h4>
-          </div>
-          <div className="summary-item card">
-            <p>Pending</p>
-            <h4>{complaints.pending}</h4>
-          </div>
-          <div className="summary-item card">
-            <p>Resolved</p>
-            <h4>{complaints.completed}</h4>
-          </div>
-        </div>
+        <button onClick={() => setIsEditModalOpen(true)} className="btn-edit-profile">
+          Edit Profile
+        </button>
       </div>
 
       <div className="summary-card card">
@@ -94,6 +83,29 @@ function StudentDashboard() {
           </div>
         </div>
       </div>
+
+      <div className="summary-card card">
+        <h3>Complaints</h3>
+        <div className="summary-grid">
+          <div className="summary-item card">
+            <p>Total</p>
+            <h4>{complaints.total}</h4>
+          </div>
+          <div className="summary-item card">
+            <p>Pending</p>
+            <h4>{complaints.pending}</h4>
+          </div>
+          <div className="summary-item card">
+            <p>Resolved</p>
+            <h4>{complaints.completed}</h4>
+          </div>
+        </div>
+      </div>
+      {isEditModalOpen && (
+        <EditProfileModal 
+          onClose={() => setIsEditModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

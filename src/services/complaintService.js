@@ -24,25 +24,18 @@ export const addComplaint = async (studentId, complaintData) => {
 };
 
 /**
- * Fetches all complaints for a specific student, ordered by creation date.
+ * Fetches all complaints for a specific student.
  * @param {string} studentId - The UID of the student.
- * @returns {Promise<Array>} - An array of complaint documents.
+ * @returns {Array} An array of complaint documents.
  */
 export const getStudentComplaints = async (studentId) => {
-  try {
-    const q = query(
-      collection(db, 'complaints'), 
-      where('studentId', '==', studentId)
-    );
-    const querySnapshot = await getDocs(q);
-    // Sort by date in descending order on the client-side
-    const complaints = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    complaints.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
-    return complaints;
-  } catch (error) {
-    console.error("Error fetching student complaints: ", error);
-    throw new Error("Could not fetch complaint history.");
+  if (!studentId) {
+    console.error("Student ID is required to fetch complaints.");
+    return [];
   }
+  const q = query(collection(db, 'complaints'), where('studentId', '==', studentId));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
 /**
