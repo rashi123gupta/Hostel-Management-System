@@ -93,50 +93,83 @@ function AdminDashboard() {
   if (loading) return <div className="loading">Loading Dashboard...</div>;
   if (error) return <div className="error-message">{error}</div>;
 
-  return (
-    <div className="page-container">
-      {/* Profile Details Card */}
-      <div className="user-profile-container card">
-        <div className="profile-image">
-          <img 
-            src="https://logowik.com/content/uploads/images/t_blue-member-icon9937.logowik.com.webp"
-            alt="Admin Profile" 
-          />
-        </div>
-        <div className="user-details-card">
-          <h2 className="user-name">{userProfile?.name || 'Admin'}</h2>
-          <p className="user-info">Role: {userProfile?.role}</p>
-          <p className="user-info">Email: {userProfile?.email}</p>
-        </div>
-      </div>
-    
-      {/* Student Summary Card */}
-      <div className="summary-card card">
-        <h3>Student Attendance</h3>
-        <p>Total Students: {summary.totalStudents}</p>
-        <p>Present: {summary.presentStudents}</p>
-        <p>On Leave: {summary.studentsOnLeave}</p>
-      </div>
+  return (
+    <div className="page-container">
+      {/* Profile Details Card */}
+      <div className="user-profile-container card">
+        <div className="profile-image">
+          <img 
+            src="https://logowik.com/content/uploads/images/t_blue-member-icon9937.logowik.com.webp"
+            alt="Admin Profile" 
+          />
+        </div>
+        <div className="user-details-card">
+          <h2 className="user-name">{userProfile?.name || 'Admin'}</h2>
+          <p className="user-info">Role: {userProfile?.role}</p>
+          <p className="user-info">Email: {userProfile?.email}</p>
+        </div>
+      </div>
+
+      {/* Student Attendance */}
+      <div className="summary-card card">
+        <h3>Student Attendance</h3>
+        <div className="summary-grid">
+          <div className="summary-item card">
+            <p>Total Students</p>
+            <h4>{summary.totalStudents}</h4>
+          </div>
+          <div className="summary-item card">
+            <p>Students on Leave</p>
+            <h4>{summary.studentsOnLeave}</h4>
+          </div>
+          <div className="summary-item card">
+            <p>Present</p>
+            <h4>{summary.totalStudents - summary.studentsOnLeave}</h4>
+          </div>
+        </div>
+      </div>
+    
+      {/* Leaves Summary Card */}
+      <div className="summary-card card">
+        <h3>Leaves Overview</h3>
+        <div className="summary-grid">
+          <div className="summary-item card">
+            <p>Total</p>
+            <h4>{summary.totalLeaves}</h4>
+          </div>
+          <div className="summary-item card">
+            <p>Pending</p>
+            <h4>{summary.pendingLeaves}</h4>
+          </div>
+          <div className="summary-item card">
+            <p>Approved</p>
+            <h4>{summary.approvedLeaves}</h4>
+          </div>
+        </div>
+      </div>
 
       {/* Complaints Summary Card */}
-      <div className="summary-card card">
-        <h3>Complaints Overview</h3>
-        <p>Total Complaints: {summary.totalComplaints}</p>
-        <p>Pending: {summary.pendingComplaints}</p>
-        <p>Resolved: {summary.resolvedComplaints}</p>
-      </div>
+      <div className="summary-card card">
+        <h3>Complaints Overview</h3>
+        <div className="summary-grid">
+          <div className="summary-item card">
+            <p>Total</p>
+            <h4>{summary.totalComplaints}</h4>
+          </div>
+          <div className="summary-item card">
+            <p>Pending</p>
+            <h4>{summary.pendingComplaints}</h4>
+          </div>
+          <div className="summary-item card">
+            <p>Resolved</p>
+            <h4>{summary.resolvedComplaints}</h4>
+          </div>
+        </div>
+      </div>
 
-      {/* Leaves Summary Card */}
-      <div className="summary-card card">
-        <h3>Leaves Overview</h3>
-        <p>Total Requests: {summary.totalLeaves}</p>
-        <p>Pending: {summary.pendingLeaves}</p>
-        <p>Approved: {summary.approvedLeaves}</p>
-        <p>Rejected: {summary.rejectedLeaves}</p>
-      </div>
-    </div>
-  );
+      
+    </div>
+  );
 }
 
 export default AdminDashboard;
-

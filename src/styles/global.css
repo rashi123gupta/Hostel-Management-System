@@ -98,7 +98,7 @@ body {
   color: #4a5568;
   flex-basis: 120px; /* Adjust as needed */
   flex-shrink: 0;
-  text-align: right;
+  text-align: left;
 }
 
 .form-input {
@@ -124,7 +124,9 @@ body {
 
 /* --- 4. General Buttons --- */
 .btn-primary {
+  float: right;
   padding: 0.8rem;
+  margin: 8px;
   border: none;
   background-color: #3498db;
   color: white;
@@ -320,6 +322,7 @@ body {
 }
 
 .btn-close-modal {
+  float: right;
   margin: 8px;
   padding: 0.8rem;
   border: none;
@@ -357,7 +360,7 @@ body {
   display: flex;
   justify-content: space-between;
   gap: 1.5rem;
-  margin-top: 1.5rem;
+  /* margin-top: 0.5rem; */
   flex-wrap: wrap; /* Allows wrapping on smaller screens */
 }
 
@@ -370,6 +373,7 @@ body {
   border-radius: 10px;
   box-shadow: black;
   max-width: 250px; /* Ensure a minimum width */
+  /* max-height: 170px; */
 }
 
 .summary-item p {

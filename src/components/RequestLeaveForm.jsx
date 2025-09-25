@@ -57,7 +57,6 @@ export default function RequestLeaveForm({ isOpen, onClose, onSuccess }) {
       <div className="modal-content">
         <div className="modal-header">
           <h2>Request New Leave</h2>
-          <button onClick={onClose} className="close-button">&times;</button>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="modal-body">

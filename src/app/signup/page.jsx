@@ -65,15 +65,15 @@ function SignupPage() {
           <input type="password" name="password" id="password" value={formData.password} onChange={handleChange} className="form-input" required />
         </div>
         <div className="form-group">
-          <label htmlFor="rollNo">Roll No</label>
+          <label htmlFor="rollNo">Roll Number</label>
           <input type="text" name="rollNo" id="rollNo" value={formData.rollNo} onChange={handleChange} className="form-input" required />
         </div>
         <div className="form-group">
-          <label htmlFor="hostelNo">Hostel No</label>
+          <label htmlFor="hostelNo">Hostel Number</label>
           <input type="text" name="hostelNo" id="hostelNo" value={formData.hostelNo} onChange={handleChange} className="form-input" />
         </div>
         <div className="form-group">
-          <label htmlFor="roomNo">Room No</label>
+          <label htmlFor="roomNo">Room Number</label>
           <input type="text" name="roomNo" id="roomNo" value={formData.roomNo} onChange={handleChange} className="form-input" />
         </div>
         
