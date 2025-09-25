@@ -65,13 +65,10 @@ function SignupPage() {
           <input type="password" name="password" id="password" value={formData.password} onChange={handleChange} className="form-input" required />
         </div>
         <div className="form-group">
-<<<<<<< HEAD
+
           <label htmlFor="rollNo">Roll Number</label>
           <input type="text" name="rollNo" id="rollNo" value={formData.rollNo} onChange={handleChange} className="form-input" required />
-=======
-          <label htmlFor="rollNo">Roll No</label>
-          <input type="text" name="rollNo" id="rollNo" value={formData.rollNo} onChange={handleChange} className="form-input" />
->>>>>>> 6f3f2984c9de5411d3128c7955ce1c52935ccee2
+
         </div>
         <div className="form-group">
           <label htmlFor="hostelNo">Hostel Number</label>
