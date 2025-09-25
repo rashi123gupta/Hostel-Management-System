@@ -320,6 +320,7 @@ body {
 }
 
 .btn-close-modal {
+  margin: 8px;
   padding: 0.8rem;
   border: none;
   background-color: #e74c3c; /* Red color */
@@ -351,7 +352,7 @@ body {
 
 
 
-/* Dashboard summary grid styles */
+/* 10. Dashboard summary grid styles */
 .summary-grid {
   display: flex;
   justify-content: space-between;

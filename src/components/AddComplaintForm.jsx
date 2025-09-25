@@ -34,7 +34,7 @@ export default function AddComplaintForm({ isOpen, onClose, onSuccess }) {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-backdrop">
+    <div className="modal">
       <div className="modal-content">
         <div className="modal-header">
           <h2>File a New Complaint</h2>
@@ -58,7 +58,7 @@ export default function AddComplaintForm({ isOpen, onClose, onSuccess }) {
             {error && <p className="error-message">{error}</p>}
           </div>
           <div className="modal-footer">
-            <button type="button" onClick={onClose} className="btn-tertiary">
+            <button type="button" onClick={onClose} className="btn-close-modal">
               Cancel
             </button>
             <button type="submit" className="btn-primary" disabled={isSubmitting}>
