@@ -1,4 +1,3 @@
-// src/app/student/complaints/page.jsx
 import React from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { getStudentComplaints } from '../../../services/complaintService';
@@ -31,6 +30,7 @@ export default function StudentComplaintsPage() {
 
   const handleComplaintAdded = () => {
     fetchComplaints(); // Re-fetch complaints to show the new one
+    setIsModalOpen(false);
   };
   
   const formatDateForDisplay = (dateValue) => {
@@ -48,7 +48,7 @@ export default function StudentComplaintsPage() {
     const lowerStatus = status.toLowerCase(); 
     switch (lowerStatus) {
       case 'resolved':
-        return 'status-approved'; // Using 'approved' class for green color
+        return 'status-approved';
       case 'pending':
       default:
         return 'status-pending';
@@ -59,7 +59,7 @@ export default function StudentComplaintsPage() {
     <div className="page-container">
       <div className="page-header">
         <h1 className="page-title">Your Complaints</h1>
-        <button onClick={() => setIsModalOpen(true)} className="btn-secondary">
+        <button onClick={() => setIsModalOpen(true)} className="btn-primary">
           Add Complaint
         </button>
       </div>
@@ -95,7 +95,7 @@ export default function StudentComplaintsPage() {
               </tbody>
             </table>
           ) : (
-             <p>You have not filed any complaints yet.</p>
+            <p>You have not filed any complaints yet.</p>
           )}
         </div>
       )}

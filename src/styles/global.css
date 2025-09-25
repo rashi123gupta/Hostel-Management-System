@@ -96,7 +96,7 @@ body {
 .form-group label {
   font-weight: 600;
   color: #4a5568;
-  flex-basis: 100px; /* Adjust as needed */
+  flex-basis: 120px; /* Adjust as needed */
   flex-shrink: 0;
   text-align: right;
 }
@@ -319,7 +319,6 @@ body {
   margin-top: 1.5rem;
 }
 
-/* CORRECTED: Close button is now red and same size as Save */
 .btn-close-modal {
   padding: 0.8rem;
   border: none;
@@ -350,3 +349,42 @@ body {
 .error-message { background-color: #fbe2e2; color: #c0392b; }
 .loading { font-weight: bold; color: #2c3e50; }
 
+
+
+/* Dashboard summary grid styles */
+.summary-grid {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap; /* Allows wrapping on smaller screens */
+}
+
+.summary-item {
+  text-align: center;
+  flex-grow: 1;
+  padding: 1rem;
+  background-color: #f0f4f8;
+  border: 0.5px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: black;
+  max-width: 250px; /* Ensure a minimum width */
+}
+
+.summary-item p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #718096;
+}
+
+.summary-item h4 {
+  margin: 0.5rem 0 0;
+  font-size: 2rem;
+  color: #2c5282;
+}
+
+/* Specific colors for different statuses */
+.summary-item:nth-child(1) { background-color: #e6f4ff; }
+.summary-item:nth-child(2) { background-color: #fffbe6; }
+.summary-item:nth-child(3) { background-color: #e6ffec; }
+.summary-item:nth-child(4) { background-color: #ffcccc; }

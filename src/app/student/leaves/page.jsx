@@ -63,7 +63,7 @@ export default function StudentLeavesPage() {
     <div className="page-container">
       <div className="page-header">
         <h1 className="page-title">Your Leave Requests</h1>
-        <button onClick={() => setIsModalOpen(true)} className="btn-secondary">
+        <button onClick={() => setIsModalOpen(true)} className="btn-primary">
           Request Leave
         </button>
       </div>
