@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { getAllComplaints, updateComplaintStatus } from '../../../services/complaintService';
 import { getAllUsers } from '../../../services/userService';
-import '../../../styles/global.css';
 
 function AdminComplaints() {
   const [complaints, setComplaints] = useState([]);
   const [users, setUsers] = useState({});
-  const [complaintStatus, setComplaintStatus] = useState({});
   const [remarks, setRemarks] = useState({});
   const [showModal, setShowModal] = useState(false);
-  const [currentComplaintId, setCurrentComplaintId] = useState(null);
+  const [currentComplaint, setCurrentComplaint] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchComplaints = async () => {
+  const fetchComplaintsData = async () => {
+    setLoading(true);
     try {
       const [fetchedComplaints, fetchedUsers] = await Promise.all([
         getAllComplaints(),
@@ -28,12 +27,6 @@ function AdminComplaints() {
       setComplaints(fetchedComplaints);
       setUsers(userMap);
       
-      const initialStatus = fetchedComplaints.reduce((acc, complaint) => {
-        acc[complaint.id] = complaint.status;
-        return acc;
-      }, {});
-      setComplaintStatus(initialStatus);
-
       const initialRemarks = fetchedComplaints.reduce((acc, complaint) => {
         acc[complaint.id] = complaint.resolutionDetails || '';
         return acc;
@@ -49,76 +42,63 @@ function AdminComplaints() {
   };
 
   useEffect(() => {
-    fetchComplaints();
+    fetchComplaintsData();
   }, []);
 
   const handleStatusChange = async (complaintId, newStatus) => {
-    const originalStatus = complaints.find(c => c.id === complaintId).status;
-    const resolutionDetails = remarks[complaintId] || '';
-
     try {
-      await updateComplaintStatus(complaintId, newStatus, resolutionDetails);
-      setComplaintStatus(prevStatus => ({
-        ...prevStatus,
-        [complaintId]: newStatus,
-      }));
-      alert(`Complaint status updated to ${newStatus} successfully!`);
+      const complaint = complaints.find(c => c.id === complaintId);
+      await updateComplaintStatus(complaintId, newStatus, complaint.resolutionDetails);
+      // Refresh data to show changes
+      fetchComplaintsData(); 
     } catch (err) {
       console.error("Error updating complaint status:", err);
       setError('Failed to update complaint status.');
     }
   };
 
-  const openModal = (complaintId) => {
-    setCurrentComplaintId(complaintId);
+  const openModal = (complaint) => {
+    setCurrentComplaint(complaint);
     setShowModal(true);
   };
 
-  const handleRemarksChange = (e) => {
-    setRemarks(prevRemarks => ({
-      ...prevRemarks,
-      [currentComplaintId]: e.target.value,
-    }));
-  };
-
   const handleSaveRemarks = async () => {
-    const complaintToUpdate = complaints.find(c => c.id === currentComplaintId);
-    const newStatus = complaintStatus[currentComplaintId];
-    const resolutionDetails = remarks[currentComplaintId];
+    if (!currentComplaint) return;
+    
     try {
-      await updateComplaintStatus(currentComplaintId, newStatus, resolutionDetails);
+      await updateComplaintStatus(
+        currentComplaint.id,
+        currentComplaint.status,
+        remarks[currentComplaint.id]
+      );
       setShowModal(false);
-      alert('Remarks saved successfully!');
-      fetchComplaints(); // Refresh to show changes
+      setCurrentComplaint(null);
+      // Refresh data
+      fetchComplaintsData(); 
     } catch (err) {
       console.error("Error saving remarks:", err);
       setError('Failed to save remarks.');
     }
   };
 
-  if (loading) {
-    return <div className="loading">Loading complaints...</div>;
-  }
-
-  if (error) {
-    return <div className="error-message">{error}</div>;
-  }
+  if (loading) return <div className="loading">Loading complaints...</div>;
+  if (error) return <div className="error-message">{error}</div>;
 
   return (
     <div className="page-container">
-      <h1 className="page-title">Manage Complaints</h1>
-      <div className="card" style={{ maxWidth: '1200px' }}>
+      <div className="page-header">
+        <h1>Manage Complaints</h1>
+      </div>
+      <div className="card">
         {complaints.length > 0 ? (
           <table className="user-table">
             <thead>
               <tr>
                 <th>Student Name</th>
                 <th>Roll No</th>
-                <th>Hostel No</th>
-                <th>Room No</th>
                 <th>Description</th>
                 <th>Status</th>
-                <th>Remarks</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -126,24 +106,21 @@ function AdminComplaints() {
                 <tr key={complaint.id}>
                   <td>{users[complaint.studentId]?.name || 'N/A'}</td>
                   <td>{users[complaint.studentId]?.rollNo || 'N/A'}</td>
-                  <td>{users[complaint.studentId]?.hostelNo || 'N/A'}</td>
-                  <td>{users[complaint.studentId]?.roomNo || 'N/A'}</td>
-                  <td>{complaint.details}</td>
+                  <td>{complaint.description}</td>
                   <td>
                     <select
-                      value={complaintStatus[complaint.id] || complaint.status}
+                      value={complaint.status}
                       onChange={(e) => handleStatusChange(complaint.id, e.target.value)}
-                      className={`status-select status-${complaintStatus[complaint.id]?.toLowerCase() || complaint.status.toLowerCase()}`}
+                      className={`status-select status-${complaint.status.toLowerCase()}`}
                     >
                       <option value="Pending">Pending</option>
                       <option value="Resolved">Resolved</option>
                     </select>
                   </td>
-                  <td>
-                    <button onClick={() => openModal(complaint.id)} className="btn-add-remarks">Add</button>
-                  </td>
-                  <td>
-                    {/* The Save button is now inside the modal */}
+                  <td className="actions-cell">
+                    <button onClick={() => openModal(complaint)} className="btn-add-remarks">
+                      Remarks
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -156,12 +133,12 @@ function AdminComplaints() {
       {showModal && (
         <div className="modal">
           <div className="modal-content">
-            <h3>Add Remarks</h3>
+            <h3>Add/Edit Remarks</h3>
             <textarea
               className="remarks-textarea"
               rows="4"
-              value={remarks[currentComplaintId] || ''}
-              onChange={handleRemarksChange}
+              value={remarks[currentComplaint.id] || ''}
+              onChange={(e) => setRemarks({...remarks, [currentComplaint.id]: e.target.value})}
               placeholder="Enter your remarks here..."
             ></textarea>
             <div className="modal-actions">

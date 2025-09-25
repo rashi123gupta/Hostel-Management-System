@@ -1,61 +1,51 @@
-// src/services/userService.js
-// This file handles all Firestore operations related to the 'users' collection.
-
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, serverTimestamp } from "firebase/firestore";
-import { db } from "./firebase";
+import { db } from './firebase';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
 
 /**
  * Creates a new user profile document in Firestore.
- * This is called right after a successful signup.
- * @param {string} userId - The UID from Firebase Auth.
- * @param {object} data - The user's profile data (email, name, etc.).
- * @returns {Promise<void>}
+ * This is typically called right after a user signs up.
+ * @param {string} userId - The Firebase Authentication UID of the user.
+ * @param {object} userData - The user's profile data (name, email, role, etc.).
  */
-export const createUserProfile = (userId, data) => {
-  const userDocRef = doc(db, "users", userId);
-  return setDoc(userDocRef, {
-    ...data,
-    role: "student", // Default role for all new signups
-    createdAt: serverTimestamp()
-  });
+export const createUserProfile = async (userId, userData) => {
+  const userRef = doc(db, 'users', userId);
+  await setDoc(userRef, userData);
 };
 
 /**
- * Retrieves a user's profile from Firestore.
- * @param {string} userId - The UID of the user.
- * @returns {Promise<object|null>} The user's profile data or null if not found.
+ * Retrieves a specific user's profile from Firestore.
+ * @param {string} userId - The UID of the user to fetch.
+ * @returns {Promise<object|null>} - The user's profile data or null if not found.
  */
 export const getUserProfile = async (userId) => {
-  const userDocRef = doc(db, "users", userId);
-  const userDocSnap = await getDoc(userDocRef);
-
-  if (userDocSnap.exists()) {
-    return { id: userDocSnap.id, ...userDocSnap.data() };
-  } else {
-    console.error("No such user profile!");
-    return null;
+  if (!userId) return null;
+  const userRef = doc(db, 'users', userId);
+  const docSnap = await getDoc(userRef);
+  if (docSnap.exists()) {
+    return { id: docSnap.id, ...docSnap.data() };
   }
+  return null;
 };
 
 /**
- * Updates a user's profile data in Firestore.
+ * Updates an existing user's profile in Firestore.
  * @param {string} userId - The UID of the user to update.
- * @param {object} data - An object containing the fields to update.
- * @returns {Promise<void>}
+ * @param {object} dataToUpdate - An object containing the fields to update.
  */
-export const updateUserProfile = (userId, data) => {
-  const userDocRef = doc(db, "users", userId);
-  return updateDoc(userDocRef, data);
+export const updateUserProfile = async (userId, dataToUpdate) => {
+  const userRef = doc(db, 'users', userId);
+  await updateDoc(userRef, dataToUpdate);
 };
 
-
 /**
- * (Admin) Fetches all user profiles from Firestore.
- * @returns {Promise<Array>} An array of all user documents.
+ * Retrieves all user profiles from the 'users' collection.
+ * This is an admin-only function.
+ * @returns {Promise<Array<object>>} - An array of all user objects.
  */
 export const getAllUsers = async () => {
-    const usersCollection = collection(db, "users");
-    const querySnapshot = await getDocs(usersCollection);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const usersCollection = collection(db, 'users');
+    const userSnapshot = await getDocs(usersCollection);
+    const userList = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return userList;
 };
 

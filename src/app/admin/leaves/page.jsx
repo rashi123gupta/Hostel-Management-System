@@ -1,36 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getAllLeaves, updateLeaveStatus } from '../../../services/leaveService';
 import { getAllUsers } from '../../../services/userService';
-import '../../../styles/global.css';
 
 function AdminLeaves() {
   const [leaves, setLeaves] = useState([]);
   const [users, setUsers] = useState({});
-  const [leaveStatus, setLeaveStatus] = useState({}); // To track local status changes
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchLeaves = async () => {
+  // State for the remarks modal
+  const [showModal, setShowModal] = useState(false);
+  const [currentLeaveId, setCurrentLeaveId] = useState(null);
+  const [remarks, setRemarks] = useState({});
+
+  const fetchLeaveData = useCallback(async () => {
+    setLoading(true);
     try {
       const [fetchedLeaves, fetchedUsers] = await Promise.all([
         getAllLeaves(),
         getAllUsers()
       ]);
 
-      const userMap = fetchedUsers.reduce((map, user) => {
+      const userMap = fetchedLeaves.reduce((map, user) => {
         map[user.id] = user;
         return map;
       }, {});
       
       setLeaves(fetchedLeaves);
       setUsers(userMap);
-      
-      // Initialize local status state
-      const initialStatus = fetchedLeaves.reduce((acc, leave) => {
-        acc[leave.id] = leave.status;
+
+      const initialRemarks = fetchedLeaves.reduce((acc, leave) => {
+        acc[leave.id] = leave.adminRemarks || '';
         return acc;
       }, {});
-      setLeaveStatus(initialStatus);
+      setRemarks(initialRemarks);
 
     } catch (err) {
       setError('Failed to fetch leave data.');
@@ -38,53 +41,78 @@ function AdminLeaves() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchLeaves();
   }, []);
 
-  const handleStatusChange = (leaveId, newStatus) => {
-    setLeaveStatus(prevStatus => ({
-      ...prevStatus,
-      [leaveId]: newStatus,
-    }));
-  };
+  useEffect(() => {
+    fetchLeaveData();
+  }, [fetchLeaveData]);
 
-  const handleSaveChanges = async (leaveId, originalStatus) => {
-    const newStatus = leaveStatus[leaveId];
-    if (newStatus && newStatus !== originalStatus) {
-      try {
-        await updateLeaveStatus(leaveId, newStatus);
-        alert(`Leave request updated to ${newStatus} successfully!`);
-        fetchLeaves(); // Refresh the list
-      } catch (err) {
-        console.error("Error updating leave status:", err);
-        setError('Failed to update leave status.');
-      }
+  const handleStatusChange = async (leaveId, newStatus) => {
+    const adminRemarks = remarks[leaveId] || '-';
+    try {
+      await updateLeaveStatus(leaveId, newStatus, adminRemarks);
+      // Optimistically update UI
+      setLeaves(prevLeaves =>
+        prevLeaves.map(leave =>
+          leave.id === leaveId ? { ...leave, status: newStatus } : leave
+        )
+      );
+    } catch (err) {
+      console.error("Error updating leave status:", err);
+      setError('Failed to update leave status.');
     }
   };
 
-  if (loading) {
-    return <div className="loading">Loading leaves...</div>;
-  }
+  const openModal = (leaveId) => {
+    setCurrentLeaveId(leaveId);
+    setShowModal(true);
+  };
 
-  if (error) {
-    return <div className="error-message">{error}</div>;
-  }
+  const handleRemarksChange = (e) => {
+    setRemarks(prevRemarks => ({
+      ...prevRemarks,
+      [currentLeaveId]: e.target.value,
+    }));
+  };
+
+  const handleSaveRemarks = async () => {
+    const leaveToUpdate = leaves.find(l => l.id === currentLeaveId);
+    if (!leaveToUpdate) return;
+    
+    const newStatus = leaveToUpdate.status;
+    const adminRemarks = remarks[currentLeaveId];
+
+    try {
+      await updateLeaveStatus(currentLeaveId, newStatus, adminRemarks);
+      setShowModal(false);
+      // Optimistically update remarks in the UI
+      setLeaves(prevLeaves =>
+        prevLeaves.map(leave =>
+          leave.id === currentLeaveId ? { ...leave, adminRemarks: adminRemarks } : leave
+        )
+      );
+    } catch (err) {
+      console.error("Error saving remarks:", err);
+      setError('Failed to save remarks.');
+    }
+  };
+
+
+  if (loading) return <div className="loading">Loading leaves...</div>;
+  if (error) return <div className="error-message">{error}</div>;
 
   return (
     <div className="page-container">
-      <h1 className="page-title">Manage Leave Requests</h1>
+      <div className="page-header">
+        <h1>Manage Leave Requests</h1>
+      </div>
       <div className="card">
         {leaves.length > 0 ? (
-          <table className="user-table">
+          <table className="data-table">
             <thead>
               <tr>
                 <th>Student Name</th>
                 <th>Roll No</th>
-                <th>Hostel No</th>
-                <th>Room No</th>
                 <th>From</th>
                 <th>To</th>
                 <th>Reason</th>
@@ -97,31 +125,22 @@ function AdminLeaves() {
                 <tr key={leave.id}>
                   <td>{users[leave.studentId]?.name || 'N/A'}</td>
                   <td>{users[leave.studentId]?.rollNo || 'N/A'}</td>
-                  <td>{users[leave.studentId]?.hostelNo || 'N/A'}</td>
-                  <td>{users[leave.studentId]?.roomNo || 'N/A'}</td>
                   <td>{leave.fromDate}</td>
                   <td>{leave.toDate}</td>
                   <td>{leave.reason}</td>
                   <td>
                     <select
-                      value={leaveStatus[leave.id] || leave.status}
+                      value={leave.status}
                       onChange={(e) => handleStatusChange(leave.id, e.target.value)}
-                      className={`status-select status-${leaveStatus[leave.id]?.toLowerCase() || leave.status.toLowerCase()}`}
+                      className={`status-select status-${leave.status.toLowerCase()}`}
                     >
                       <option value="Pending">Pending</option>
                       <option value="Approved">Approved</option>
                       <option value="Rejected">Rejected</option>
                     </select>
                   </td>
-                  <td>
-                    {leaveStatus[leave.id] !== leave.status && (
-                      <button 
-                        onClick={() => handleSaveChanges(leave.id, leave.status)}
-                        className="btn-save-role"
-                      >
-                        Save
-                      </button>
-                    )}
+                  <td className="actions-cell">
+                    <button onClick={() => openModal(leave.id)} className="btn-add-remarks">Remarks</button>
                   </td>
                 </tr>
               ))}
@@ -131,8 +150,28 @@ function AdminLeaves() {
           <p>No leave requests found.</p>
         )}
       </div>
+
+      {showModal && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3>Add/Edit Remarks</h3>
+            <textarea
+              className="remarks-textarea"
+              rows="4"
+              value={remarks[currentLeaveId] || ''}
+              onChange={handleRemarksChange}
+              placeholder="Enter admin remarks here..."
+            ></textarea>
+            <div className="modal-actions">
+              <button onClick={handleSaveRemarks} className="btn-primary">Save</button>
+              <button onClick={() => setShowModal(false)} className="btn-close-modal">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 export default AdminLeaves;
+

@@ -3,46 +3,57 @@ import { useAuth } from '../../../context/AuthContext';
 import { getAllComplaints } from '../../../services/complaintService';
 import { getAllLeaves } from '../../../services/leaveService';
 import { getAllUsers } from '../../../services/userService';
-import '../../../styles/global.css';
 
 function AdminDashboard() {
   const { userProfile } = useAuth();
   const [summary, setSummary] = useState({
     totalStudents: 0,
+    studentsOnLeave: 0,
     totalComplaints: 0,
     pendingComplaints: 0,
     totalLeaves: 0,
     pendingLeaves: 0,
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAdminDashboardData = async () => {
-      // Fetch all users
-      const allUsers = await getAllUsers();
-      const students = allUsers.filter(u => u.role === 'student');
-      
-      // Fetch all complaints
-      const allComplaints = await getAllComplaints();
-      const pendingComplaints = allComplaints.filter(c => c.status === 'Pending').length;
+      try {
+        const [allUsers, allComplaints, allLeaves] = await Promise.all([
+          getAllUsers(),
+          getAllComplaints(),
+          getAllLeaves()
+        ]);
 
-      // Fetch all leaves
-      const allLeaves = await getAllLeaves();
-      const pendingLeaves = allLeaves.filter(l => l.status === 'Pending').length;
-      
-      setSummary({
-        totalStudents: students.length,
-        totalComplaints: allComplaints.length,
-        pendingComplaints,
-        totalLeaves: allLeaves.length,
-        pendingLeaves,
-      });
+        const students = allUsers.filter(u => u.role === 'student');
+        const pendingComplaints = allComplaints.filter(c => c.status === 'Pending').length;
+        const pendingLeaves = allLeaves.filter(l => l.status === 'Pending').length;
+        const studentsOnLeave = allLeaves.filter(l => l.status === 'Approved').length;
+        
+        setSummary({
+          totalStudents: students.length,
+          studentsOnLeave: studentsOnLeave,
+          totalComplaints: allComplaints.length,
+          pendingComplaints,
+          totalLeaves: allLeaves.length,
+          pendingLeaves,
+        });
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchAdminDashboardData();
   }, []);
 
+  if (loading) {
+    return <div className="loading">Loading Dashboard...</div>;
+  }
+
   return (
-    <div className="page-content">
+    <div className="page-container">
       {/* Profile Details Card */}
       <div className="user-profile-container card">
         <div className="profile-image">
@@ -52,7 +63,7 @@ function AdminDashboard() {
           />
         </div>
         <div className="user-details-card">
-          <h2 className="user-name">{userProfile?.name}</h2>
+          <h2 className="user-name">{userProfile?.name || 'Admin'}</h2>
           <p className="user-info">Role: {userProfile?.role}</p>
           <p className="user-info">Email: {userProfile?.email}</p>
         </div>
@@ -74,13 +85,14 @@ function AdminDashboard() {
 
       {/* Present Students */}
       <div className="summary-card card">
-        <h3>Present Students</h3>
-        <p>Total Students: {summary.totalLeaves}</p>
-        <p>Present: {summary.pendingLeaves}</p>
-        <p>Not Present: {summary.pendingLeaves}</p>
+        <h3>Student Attendance</h3>
+        <p>Total Students: {summary.totalStudents}</p>
+        <p>Students on Leave: {summary.studentsOnLeave}</p>
+        <p>Present: {summary.totalStudents - summary.studentsOnLeave}</p>
       </div>
     </div>
   );
 }
 
 export default AdminDashboard;
+

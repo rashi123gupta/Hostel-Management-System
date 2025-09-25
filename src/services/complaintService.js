@@ -1,6 +1,6 @@
 // src/services/complaintService.js
 import { db } from './firebase';
-import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 /**
  * Adds a new complaint to the 'complaints' collection.
@@ -45,3 +45,31 @@ export const getStudentComplaints = async (studentId) => {
   }
 };
 
+/**
+ * Fetches all complaints from all students. (Admin only)
+ * @returns {Promise<Array<object>>} - An array of all complaint documents.
+ */
+export const getAllComplaints = async () => {
+    const querySnapshot = await getDocs(collection(db, 'complaints'));
+    const complaints = [];
+    querySnapshot.forEach((doc) => {
+        complaints.push({ id: doc.id, ...doc.data() });
+    });
+    return complaints;
+};
+
+/**
+ * Updates the status and resolution details of a complaint. (Admin only)
+ * @param {string} complaintId - The ID of the complaint document.
+ * @param {string} newStatus - The new status ('Pending' or 'Resolved').
+ * @param {string} resolutionDetails - The remarks from the admin.
+ * @returns {Promise<void>}
+ */
+export const updateComplaintStatus = async (complaintId, newStatus, resolutionDetails) => {
+    const complaintRef = doc(db, 'complaints', complaintId);
+    await updateDoc(complaintRef, {
+        status: newStatus,
+        resolutionDetails: resolutionDetails || '-', // Ensure it's not undefined
+        updatedAt: serverTimestamp(),
+    });
+};

@@ -1,6 +1,6 @@
 // src/services/leaveService.js
 import { db } from './firebase';
-import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 /**
  * Helper function to format a Date object or a date string into DD-MM-YYYY format.
@@ -60,29 +60,29 @@ export const getStudentLeaves = async (studentId) => {
   }
 };
 
-// --- Other functions for Admin (you'll use these later) ---
-
 /**
- * Fetches all leave requests from all students (for admins).
- * @returns {Promise<Array>} - An array of all leave documents.
+ * Fetches all leave requests from all students. (Admin only)
  */
 export const getAllLeaves = async () => {
-  try {
     const querySnapshot = await getDocs(collection(db, 'leaves'));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch (error) {
-    console.error("Error fetching all leaves: ", error);
-    throw new Error("Could not fetch all leave requests.");
-  }
+    const leaves = [];
+    querySnapshot.forEach((doc) => {
+        leaves.push({ id: doc.id, ...doc.data() });
+    });
+    return leaves;
 };
 
 /**
- * Updates the status of a specific leave request (for admins).
+ * Updates the status and remarks of a specific leave request. (Admin only)
  * @param {string} leaveId - The ID of the leave document to update.
- * @param {string} newStatus - The new status ('approved' or 'rejected').
- * @returns {Promise<void>}
+ * @param {string} newStatus - The new status ('Approved' or 'Rejected').
+ * @param {string} adminRemarks - The remarks from the admin.
  */
-export const updateLeaveStatus = async (leaveId, newStatus) => {
-  // Implementation for admin panel
+export const updateLeaveStatus = async (leaveId, newStatus, adminRemarks) => {
+    const leaveRef = doc(db, 'leaves', leaveId);
+    await updateDoc(leaveRef, {
+        status: newStatus,
+        adminRemarks: adminRemarks || '-', // Ensure it's not undefined
+        updatedAt: serverTimestamp(),
+    });
 };
-
