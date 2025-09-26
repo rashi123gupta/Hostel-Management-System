@@ -1,70 +1,91 @@
-# Getting Started with Create React App
+## PROJECT TITLE:
+Hostel Management System
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Available Scripts
+## DESCRIPTION:
+This project aims to develop a Hostel Management System using Serverless Architecture. Built with 'React.js' and 'Firebase', the system provides a modern, cloud-native solution for streamlining hostel operations. 
+Serverless architecture (also known as serverless computing) is a software design pattern where applications are hosted by a third-party service, eliminating the need for server software and hardware management by the developer. Applications are broken up into individual functions that can be invoked and scaled individually.
 
-In the project directory, you can run:
+It allows students to:
+- view and edit his/her profile;
+- request leaves;
+- raise complaints.
 
-### `npm start`
+The admin can:
+- view and edit his/her profile;
+- view all the users;
+- edit type (admin/student) of the users;
+- approve/reject student's leave request;
+- resolve student's complaints.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## KEY FEATURES:
+- User-friendly Interface
+- Role-based Access
+- Real-time Dashboard for Admin & Student
+- Leave Management
+- Complaint Handling
+- Scalability
 
-### `npm test`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## QUALITY ATTRIBUTE:
+SCALABILITY - Scalability refers to the system's ability to handle an increasing amount of work or to be easily enlarged to accomodate growth in user base and data volume.
+Our choice of Firebase as a backend is key to the system's scalability. Services like Firestore and Firebase Authentication are designed to handle growth in users and data automatically, allowing the application to maintain performance without manual intervention.
 
-### `npm run build`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## TECHNOLOGY USED:
+- Frontend: React.js
+- Backend & Database: Firebase (Authentication, Firestore)
+- Hosting: Firebase Hosting
+- Styling: CSS
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Getting Started
 
-### `npm run eject`
+Follow these steps to get a local copy up and running.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Prerequisites
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- Node.js installed on your machine
+- `npm` or `yarn` package manager
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Installation
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+1. Clone the repo
+   git clone https://github.com//rashi123gupta/Hostel-Management-System
+ 
+2. Install NPM packages
+   npm install
 
-## Learn More
+3. Verify Firebase Configuration: The necessary Firebase configuration is already included in this project. You do not need to create 
+your own account or set up any API keys.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+4. Start the development server
+   npm start
 
-To learn React, check out the [React documentation](https://reactjs.org/).
 
-### Code Splitting
+## DEMONSTRATION CREDENTIALS:
+For demonstration and testing purposes, you can use the following pre-configured accounts. These accounts have been created in the Firebase Authentication system to allow for immediate access to both user roles.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+- Student Account:
+    Email               Password
+student1@gmail.com      student1
 
-### Analyzing the Bundle Size
+- Admin Account:
+    Email               Password
+admin11@gmail.com       admin1
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
 
-### Making a Progressive Web App
+## Live Demo
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+You can view a live demo of the project here: https://hostel-management-system-fde00.web.app/
 
-### Advanced Configuration
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## MADE BY:
+Shrusti Jain
+M25CSE030
+MTech CSE
 
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Rashi Gupta
+M25CSE025
+MTech CSE
