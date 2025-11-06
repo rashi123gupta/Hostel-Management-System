@@ -99,7 +99,9 @@ function AdminLeaves() {
 
   return (
     <div className="page-container">
-      <h1 className="page-title">Manage Leave Requests</h1>
+      <div className="page-header">
+        <h1>Manage Leaves</h1>
+      </div>
       <div className="card">
         {leaves.length > 0 ? (
           <table className="data-table">

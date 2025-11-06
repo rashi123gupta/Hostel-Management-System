@@ -112,4 +112,3 @@ export default function RequestLeaveForm({ isOpen, onClose, onSuccess }) {
     </div>
   );
 }
-

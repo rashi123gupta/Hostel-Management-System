@@ -1,4 +1,4 @@
-/* src/styles/global.css */
+/* src/styles/global.css
 
 /* --- 1. General Body & Layout --- */
 body {
@@ -117,7 +117,7 @@ body {
 }
 
 .auth-switch a {
-  color: #3182ce;
+  color: #3498db;
   font-weight: 600;
   text-decoration: none;
 }
@@ -143,7 +143,7 @@ body {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #2980b9;
+  background-color: #3498db;
 }
 
 /* --- 5. Page Layouts & Cards --- */
@@ -176,6 +176,16 @@ body {
   width: 100%;
   box-sizing: border-box;
   overflow-x: auto;
+}
+
+.clickable-card {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.clickable-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
 .user-profile-container {
@@ -254,9 +264,9 @@ body {
   font-weight: 600;
   text-transform: capitalize;
 }
-.status-pending { color: #975a16; background-color: #fefcbf; }
-.status-approved, .status-resolved { color: #276749; background-color: #c6f6d5; }
-.status-rejected { color: #9b2c2c; background-color: #fed7d7; }
+.status-pending { color: #f39c12; background-color: #fff8e1; }
+.status-approved, .status-resolved { color: #2ecc71; background-color: #e8f5e9; }
+.status-rejected { color: #e74c3c; background-color: #ffebee; }
 
 
 /* --- 7. Admin Controls (Selects, Buttons) --- */
@@ -268,14 +278,27 @@ body {
   cursor: pointer;
 }
 .btn-save-role {
-  padding: 0.5rem 1rem; font-size: 0.9rem; font-weight: bold; color: white;
-  background-color: #3498db; border: none; border-radius: 5px; cursor: pointer;
-  transition: background-color 0.2s ease; white-space: nowrap;
+  padding: 0.5rem 1rem; 
+  font-size: 0.9rem; 
+  font-weight: bold; 
+  color: white;
+  background-color: #3498db; 
+  border: none; 
+  border-radius: 5px; 
+  cursor: pointer;
+  transition: background-color 0.2s ease; 
+  white-space: nowrap;
 }
 .btn-save-role:hover { background-color: #2980b9; }
 .btn-approve {
-  background-color: #2ecc71; color: white; border: none; padding: 0.5rem 1rem;
-  border-radius: 5px; cursor: pointer; font-weight: bold; margin-right: 0.5rem;
+  background-color: #2ecc71; 
+  color: white; 
+  border: none; 
+  padding: 0.5rem 1rem;
+  border-radius: 5px; 
+  cursor: pointer; 
+  font-weight: bold; 
+  margin-right: 0.5rem;
   transition: background-color 0.2s ease;
 }
 .btn-approve:hover { background-color: #27ae60; }
@@ -295,9 +318,10 @@ body {
 }
 .btn-add-remarks:hover { background-color: #6c7a7b; }
 .actions-cell { display: flex; align-items: center; justify-content: space-between; }
-.status-select.status-pending { background-color: #fff8e1; color: #ffa000; }
-.status-select.status-resolved, .status-select.status-approved { background-color: #e8f5e9; color: #43a047; }
-.status-select.status-rejected { background-color: #ffebee; color: #d32f2f; }
+
+.status-select.status-pending { background-color: #fff8e1; color: #f39c12; }
+.status-select.status-resolved, .status-select.status-approved { background-color: #e8f5e9; color: #2ecc71; }
+.status-select.status-rejected { background-color: #ffebee; color: #e74c3c; }
 
 /* --- 8. Modal Styles --- */
 .modal {
