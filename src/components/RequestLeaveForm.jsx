@@ -1,65 +1,47 @@
-// src/components/RequestLeaveForm.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-// FIX: Changed function name from addLeaveRequest to addLeave
 import { addLeave } from '../services/leaveService';
 
-export default function RequestLeaveForm({ isOpen, onClose, onSuccess }) {
+function RequestLeaveModal({ onClose }) {
   const { currentUser } = useAuth();
-  const [formData, setFormData] = React.useState({
-    fromDate: '',
-    toDate: '',
-    reason: ''
-  });
-  const [error, setError] = React.useState('');
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [formData, setFormData] = useState({ fromDate: '', toDate: '', reason: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.fromDate || !formData.toDate || !formData.reason) {
-      setError('All fields are required.');
+    if (!currentUser) {
+      setError("You must be logged in to request leave.");
       return;
     }
-    if (new Date(formData.fromDate) > new Date(formData.toDate)) {
-        setError('"From Date" cannot be after "To Date".');
-        return;
-    }
-
-    setIsSubmitting(true);
+    setLoading(true);
     setError('');
 
     try {
-      // FIX: Changed function call to addLeave
-      await addLeave(currentUser.uid, {
-        fromDate: new Date(formData.fromDate),
-        toDate: new Date(formData.toDate),
-        reason: formData.reason,
-      });
-      onSuccess(); // Notify parent to re-fetch data
-      onClose();   // Close the modal
+      await addLeave(currentUser.uid, formData);
+      alert('Leave request submitted successfully!');
+      onClose();
     } catch (err) {
       setError('Failed to submit leave request. Please try again.');
       console.error(err);
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
-
-  if (!isOpen) return null;
 
   return (
     <div className="modal">
       <div className="modal-content">
-        <div className="modal-header">
-          <h2>Request New Leave</h2>
-        </div>
+        <h3>Request New Leave</h3>
+        {error && <p className="error-message">{error}</p>}
+
+        {/* The form structure is slightly changed for better styling */}
         <form onSubmit={handleSubmit}>
-          <div className="modal-body">
+          <div className="modal-form-body">
             <div className="form-group">
               <label htmlFor="fromDate">From Date</label>
               <input
@@ -68,8 +50,8 @@ export default function RequestLeaveForm({ isOpen, onClose, onSuccess }) {
                 name="fromDate"
                 value={formData.fromDate}
                 onChange={handleChange}
-                className="form-input"
                 required
+                className="form-input"
               />
             </div>
             <div className="form-group">
@@ -80,8 +62,8 @@ export default function RequestLeaveForm({ isOpen, onClose, onSuccess }) {
                 name="toDate"
                 value={formData.toDate}
                 onChange={handleChange}
-                className="form-input"
                 required
+                className="form-input"
               />
             </div>
             <div className="form-group">
@@ -92,19 +74,19 @@ export default function RequestLeaveForm({ isOpen, onClose, onSuccess }) {
                 rows="4"
                 value={formData.reason}
                 onChange={handleChange}
+                required
                 className="form-input"
                 placeholder="Please provide a brief reason for your leave"
-                required
               ></textarea>
             </div>
-            {error && <p className="error-message">{error}</p>}
           </div>
-          <div className="modal-footer">
+
+          <div className="modal-actions">
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading ? 'Submitting...' : 'Submit Request'}
+            </button>
             <button type="button" onClick={onClose} className="btn-close-modal">
               Cancel
-            </button>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? 'Submitting...' : 'Submit Request'}
             </button>
           </div>
         </form>
@@ -112,3 +94,9 @@ export default function RequestLeaveForm({ isOpen, onClose, onSuccess }) {
     </div>
   );
 }
+<<<<<<< HEAD
+=======
+
+export default RequestLeaveModal;
+
+>>>>>>> 30db69fa2039a0d68c7a906b15d8de57c869f3ad

@@ -47,17 +47,16 @@ export const addLeave = async (studentId, leaveData) => {
 /**
  * Fetches all leave requests for a specific student.
  * @param {string} studentId - The UID of the student.
- * @returns {Promise<Array>} - An array of leave documents.
+ * @returns {Array} An array of leave documents.
  */
 export const getStudentLeaves = async (studentId) => {
-  try {
-    const q = query(collection(db, 'leaves'), where('studentId', '==', studentId));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch (error) {
-    console.error("Error fetching student leaves: ", error);
-    throw new Error("Could not fetch leave history.");
+  if (!studentId) {
+    console.error("Student ID is required to fetch leaves.");
+    return [];
   }
+  const q = query(collection(db, 'leaves'), where('studentId', '==', studentId));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
 /**
