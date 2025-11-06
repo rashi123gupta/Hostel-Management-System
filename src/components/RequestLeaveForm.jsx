@@ -94,9 +94,5 @@ function RequestLeaveModal({ onClose }) {
     </div>
   );
 }
-<<<<<<< HEAD
-=======
 
 export default RequestLeaveModal;
-
->>>>>>> 30db69fa2039a0d68c7a906b15d8de57c869f3ad
