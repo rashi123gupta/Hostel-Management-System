@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+  
+    // Helper function to get the caller's role.
+    function getRole(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data.role;
+    }
+    
+    // Helper function to check if the caller is an admin (warden or superuser).
+    function isAdmin() {
+      return getRole(request.auth.uid) in ['warden', 'superuser'];
+    }
+
+    // --- USERS Collection Rules ---
+    match /users/{userId} {
+      // READ: A user can read their own profile. An admin (warden/superuser) can read any profile.
+      allow read: if request.auth.uid == userId || isAdmin();
+                  
+      // WRITE: A user can only write to their own profile.
+      // We block 'create' because creation is now handled by the Cloud Function.
+      allow create: if false; 
+      allow update: if request.auth.uid == userId;
+
+      // UPDATE (for Admin): A warden can update a student's role. A superuser can update a warden's role.
+      // This is a bit more secure, but for now, we'll just let any admin update roles.
+      allow update: if isAdmin();
+    }
+
+    // --- LEAVES Collection Rules ---
+    match /leaves/{leaveId} {
+      // READ: A user can read their own leaves. An admin (warden) can read all leaves.
+      allow read: if request.auth.uid == resource.data.studentId || getRole(request.auth.uid) == 'warden';
+
+      // CREATE: Only a student can create a leave request for themselves.
+      allow create: if getRole(request.auth.uid) == 'student'
+                    && request.resource.data.studentId == request.auth.uid;
+
+      // UPDATE: Only a warden can update a leave request.
+      allow update: if getRole(request.auth.uid) == 'warden';
+      
+      allow delete: if false;
+    }
+
+    // --- COMPLAINTS Collection Rules ---
+    match /complaints/{complaintId} {
+      // READ: A user can read their own complaints. An admin (warden) can read all complaints.
+      allow read: if request.auth.uid == resource.data.studentId || getRole(request.auth.uid) == 'warden';
+
+      // CREATE: Only a student can create a complaint for themselves.
+      allow create: if getRole(request.auth.uid) == 'student'
+                    && request.resource.data.studentId == request.auth.uid;
+
+      // UPDATE: Only a warden can update a complaint.
+      allow update: if getRole(request.auth.uid) == 'warden';
+      
+      allow delete: if false;
+    }
+  }
+}

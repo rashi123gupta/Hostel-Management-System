@@ -1,10 +1,9 @@
-// src/app/login/page.jsx
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { logIn } from '../../services/authService';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { logIn } from '../../services/authService';
 
-export default function LoginPage() {
+function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,25 +20,25 @@ export default function LoginPage() {
     setError('');
     try {
       await logIn(formData.email, formData.password);
-      // **THE FIX IS HERE**
-      // Navigate to the root. The App component will handle the role-based redirect.
+      // The AuthContext and App.js redirect logic will handle
+      // sending the user to the correct dashboard.
       navigate('/'); 
     } catch (err) {
-      setError('Failed to log in. Please check your email and password.');
-      console.error(err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  // If user is already logged in, redirect them from the login page
   if (currentUser) {
     navigate('/');
-    return null; // Render nothing while redirecting
+    return null;
   }
 
   return (
     <div className="auth-container">
-      <h2>Login</h2>
+      <h2>Hostel Management Login</h2>
+      {error && <p className="error-message">{error}</p>}
       <form onSubmit={handleLogin} className="auth-form">
         <div className="form-group">
           <label htmlFor="email">Email Address</label>
@@ -47,10 +46,10 @@ export default function LoginPage() {
             type="email"
             id="email"
             name="email"
-            className="form-input"
             value={formData.email}
             onChange={handleChange}
             required
+            className="form-input"
           />
         </div>
         <div className="form-group">
@@ -59,21 +58,18 @@ export default function LoginPage() {
             type="password"
             id="password"
             name="password"
-            className="form-input"
             value={formData.password}
             onChange={handleChange}
             required
+            className="form-input"
           />
         </div>
-        {error && <p className="error-message">{error}</p>}
         <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? 'Logging In...' : 'Login'}
+          {loading ? 'Logging in...' : 'Login'}
         </button>
       </form>
-      <p className="auth-switch">
-        Don't have an account? <Link to="/signup">Sign Up</Link>
-      </p>
     </div>
   );
 }
 
+export default LoginPage;

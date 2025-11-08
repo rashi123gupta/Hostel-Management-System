@@ -1,40 +1,63 @@
-import { db } from './firebase';
+import { db, functions, auth } from './firebase';
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
+
+const CREATE_USER_URL = "https://us-central1-hostel-management-system-fde00.cloudfunctions.net/createNewUser";
 
 /**
- * Creates a new user profile document in Firestore.
- * This is typically called right after a user signs up.
- * @param {string} userId - The Firebase Authentication UID of the user.
- * @param {object} userData - The user's profile data (name, email, role, etc.).
+ * Calls our Cloud Function to create a new user by manually passing the auth token.
+ * @param {object} userData - Data for the new user (email, password, name, roleToCreate, etc.)
  */
-export const createUserProfile = async (userId, userData) => {
-  const userRef = doc(db, 'users', userId);
-  await setDoc(userRef, userData);
+export const createNewUser = async (userData) => {
+  
+  // 1. Get the currently logged-in user from our 'auth' instance
+  const user = auth.currentUser;
+  
+  if (!user) {
+    // This should not happen if our ProtectedRoute is working, but it's a good safeguard.
+    throw new Error("No user is logged in.");
+  }
+
+  // 2. Manually get the user's ID Token (their "credentials")
+  const idToken = await user.getIdToken();
+
+  // 3. Get our callable function (this syntax is correct)
+  const createUser = httpsCallable(functions, 'createNewUser'); 
+  
+  try {
+    // 4. Pass BOTH the user data AND the token
+    const result = await createUser({ 
+      userData: userData,  // The data for the new user
+      idToken: idToken     // The token of the user *making* the request
+    });
+    
+    return result.data;
+  } catch (error) {
+    console.error("Error calling createNewUser function:", error);
+    throw new Error(error.message);
+  }
 };
 
 /**
- * Retrieves a specific user's profile from Firestore.
- * @param {string} userId - The UID of the user to fetch.
- * @returns {Promise<object|null>} - The user's profile data or null if not found.
+ * Fetches a user's profile from Firestore.
+ * @param {string} userId - The UID of the user.
+ * @returns {object} The user's profile data.
  */
 export const getUserProfile = async (userId) => {
   if (!userId) return null;
-  const userRef = doc(db, 'users', userId);
-  const docSnap = await getDoc(userRef);
-  if (docSnap.exists()) {
-    return { id: docSnap.id, ...docSnap.data() };
-  }
-  return null;
+  const userDocRef = doc(db, 'users', userId);
+  const userDoc = await getDoc(userDocRef);
+  return userDoc.exists() ? { id: userDoc.id, ...userDoc.data() } : null;
 };
 
 /**
- * Updates an existing user's profile in Firestore.
+ * Updates a user's profile in Firestore.
  * @param {string} userId - The UID of the user to update.
- * @param {object} dataToUpdate - An object containing the fields to update.
+ *... (This function remains the same as before) ...
  */
 export const updateUserProfile = async (userId, dataToUpdate) => {
-  const userRef = doc(db, 'users', userId);
-  await updateDoc(userRef, dataToUpdate);
+  const userDocRef = doc(db, 'users', userId);
+  await updateDoc(userDocRef, dataToUpdate);
 };
 
 /**

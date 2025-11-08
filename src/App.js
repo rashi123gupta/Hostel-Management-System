@@ -8,19 +8,20 @@ import Navbar from './components/Navbar';
 
 // Page Components
 import LoginPage from './app/login/page';
-import SignupPage from './app/signup/page';
-import ProfilePage from './app/profile/page';
 
 // Student Page Components
 import StudentDashboard from './app/student/dashboard/page';
 import StudentLeavesPage from './app/student/leaves/page';
 import StudentComplaintsPage from './app/student/complaints/page';
 
-// Admin Page Components (assuming these exist from your teammate)
+// Admin/Warden Page Components
 import AdminDashboard from './app/admin/dashboard/page';
 import AdminUsers from './app/admin/users/page';
 import AdminLeaves from './app/admin/leaves/page';
 import AdminComplaints from './app/admin/complaints/page';
+
+// Superuser Page Components
+import SuperuserDashboard from './app/superuser/dashboard/page';
 
 /**
  * A component that intelligently redirects logged-in users to their
@@ -30,14 +31,21 @@ function DashboardRedirect() {
   const { userProfile, loading } = useAuth();
 
   if (loading || !userProfile) {
-    // Show a loading state or nothing while user data is being fetched
-    return <div>Loading...</div>;
+    return <div className="loading">Loading...</div>;
   }
 
-  // Redirect user based on their role
-  return userProfile.role === 'admin' 
-    ? <Navigate to="/admin/dashboard" replace /> 
-    : <Navigate to="/student/dashboard" replace />;
+  // Updated to include new roles
+  switch (userProfile.role) {
+    case 'superuser':
+      return <Navigate to="/superuser/dashboard" replace />;
+    case 'warden':
+      return <Navigate to="/warden/dashboard" replace />;
+    case 'student':
+      return <Navigate to="/student/dashboard" replace />;
+    default:
+      // If role is unknown or missing, send to login
+      return <Navigate to="/login" replace />;
+  }
 }
 
 function App() {
@@ -49,43 +57,54 @@ function App() {
           <Routes>
             {/* --- Public Routes --- */}
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
 
             {/* --- Protected Student Routes --- */}
-            <Route path="/student/dashboard" element={
-              <ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>
-            } />
-            <Route path="/student/leaves" element={
-              <ProtectedRoute role="student"><StudentLeavesPage /></ProtectedRoute>
-            } />
-            <Route path="/student/complaints" element={
-              <ProtectedRoute role="student"><StudentComplaintsPage /></ProtectedRoute>
-            } />
+            <Route 
+              path="/student/dashboard" 
+              element={<ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>} 
+            />
+            <Route 
+              path="/student/leaves" 
+              element={<ProtectedRoute role="student"><StudentLeavesPage /></ProtectedRoute>} 
+            />
+            <Route 
+              path="/student/complaints" 
+              element={<ProtectedRoute role="student"><StudentComplaintsPage /></ProtectedRoute>} 
+            />
 
-            {/* --- Protected Admin Routes --- */}
-            <Route path="/admin/dashboard" element={
-              <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>
-            } />
-            <Route path="/admin/users" element={
-              <ProtectedRoute role="admin"><AdminUsers /></ProtectedRoute>
-            } />
-            <Route path="/admin/leaves" element={
-              <ProtectedRoute role="admin"><AdminLeaves /></ProtectedRoute>
-            } />
-            <Route path="/admin/complaints" element={
-              <ProtectedRoute role="admin"><AdminComplaints /></ProtectedRoute>
-            } />
+            {/* --- Protected Warden Routes --- */}
+            <Route 
+              path="/warden/dashboard" 
+              element={<ProtectedRoute role="warden"><AdminDashboard /></ProtectedRoute>} 
+            />
+            <Route 
+              path="/warden/users" 
+              element={<ProtectedRoute role="warden"><AdminUsers /></ProtectedRoute>} 
+            />
+            <Route 
+              path="/warden/leaves" 
+              element={<ProtectedRoute role="warden"><AdminLeaves /></ProtectedRoute>} 
+            />
+            <Route 
+              path="/warden/complaints" 
+              element={<ProtectedRoute role="warden"><AdminComplaints /></ProtectedRoute>} 
+            />
             
-            {/* --- Protected Routes for Both Roles --- */}
-            <Route path="/profile" element={
-              <ProtectedRoute><ProfilePage /></ProtectedRoute>
-            } />
+            {/* --- Protected Superuser Route --- */}
+            <Route 
+              path="/superuser/dashboard" 
+              element={<ProtectedRoute role="superuser"><SuperuserDashboard /></ProtectedRoute>} 
+            />
+            <Route 
+              path="/superuser/wardens" 
+              element={<ProtectedRoute role="superuser"><AdminUsers /></ProtectedRoute>} 
+            />
 
             {/* --- Redirect Logic --- */}
-            {/* The root path redirects to the correct dashboard */}
-            <Route path="/" element={
-              <ProtectedRoute><DashboardRedirect /></ProtectedRoute>
-            } />
+            <Route 
+              path="/" 
+              element={<ProtectedRoute><DashboardRedirect /></ProtectedRoute>} 
+            />
             
             {/* --- 404 Not Found Fallback --- */}
             <Route path="*" element={
