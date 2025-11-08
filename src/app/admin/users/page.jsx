@@ -1,132 +1,138 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getAllUsers, updateUserProfile } from '../../../services/userService';
-import { useAuth } from '../../../context/AuthContext';
-import AddStudentModal from '../../../components/AddStudentModal.jsx'; // Import the new modal
+import { getUsersByRole, updateUserStatus } from '../../../services/userService';
+import AddUserModal from '../../../components/AddUserModal.jsx';
+import EditUserModal from '../../../components/EditUserModal.jsx'; 
 import '../../../styles/global.css';
 
-function AdminUsers() {
-  const { userProfile } = useAuth();
-  const [users, setUsers] = useState([]);
-  const [userRoles, setUserRoles] = useState({});
+// This component is now ONLY for Wardens managing Students
+function WardenUsersPage() {
+  const [allStudents, setAllStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [viewStatus, setViewStatus] = useState('active'); // 'active' or 'inactive'
 
-  // Renamed function for clarity
-  const fetchUsersData = useCallback(async () => {
+  // Modal states
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [userToEdit, setUserToEdit] = useState(null);
+
+  // Fetches ONLY students
+  const fetchStudents = useCallback(async () => {
     setLoading(true);
     try {
-      const fetchedUsers = await getAllUsers();
-      
-      let filteredUsers = [];
-      if (userProfile.role === 'superuser') {
-        // Superuser sees Wardens
-        filteredUsers = fetchedUsers.filter(user => user.role === 'warden');
-      } else if (userProfile.role === 'warden') {
-        // Warden sees Students
-        filteredUsers = fetchedUsers.filter(user => user.role === 'student');
-      }
-      
-      setUsers(filteredUsers);
-
-      const initialRoles = filteredUsers.reduce((acc, user) => {
-        acc[user.id] = user.role;
-        return acc;
-      }, {});
-      setUserRoles(initialRoles);
-
+      // Use the specific function to get only students
+      const fetchedStudents = await getUsersByRole('student');
+      setAllStudents(fetchedStudents);
     } catch (err) {
-      setError('Failed to fetch user data.');
-      console.error("Error fetching users:", err);
+      setError('Failed to fetch student data.');
     } finally {
       setLoading(false);
     }
-  }, [userProfile]); // Depend on userProfile
+  }, []);
 
   useEffect(() => {
-    if (userProfile) { // Only run if userProfile is available
-      fetchUsersData();
-    }
-  }, [userProfile, fetchUsersData]); // Add userProfile to dependency array
+    fetchStudents();
+  }, [fetchStudents]);
 
-  const handleRoleChange = (userId, newRole) => {
-    setUserRoles(prevRoles => ({ ...prevRoles, [userId]: newRole }));
+  // Handles activating/deactivating a student
+  const handleStatusUpdate = async (userId, newStatus) => {
+    setAllStudents(prevUsers => 
+      prevUsers.map(user => 
+        user.id === userId ? { ...user, status: newStatus } : user
+      )
+    );
+    try {
+      await updateUserStatus(userId, newStatus);
+      alert(`Student has been ${newStatus === 'active' ? 'Restored' : 'Removed'}.`);
+    } catch (err) {
+      setError(`Failed to update student status.`);
+      // Revert on error
+      setAllStudents(prevUsers => 
+        prevUsers.map(user => 
+          user.id === userId ? { ...user, status: newStatus === 'active' ? 'inactive' : 'active' } : user
+        )
+      );
+    }
   };
 
-  const handleSaveChanges = async (userId) => {
-    const newRole = userRoles[userId];
-    if (newRole) {
-      try {
-        await updateUserProfile(userId, { role: newRole });
-        alert('User role updated successfully!');
-        fetchUsersData(); // Refresh the list
-      } catch (err) {
-        console.error("Error updating user role:", err);
-        setError('Failed to update user role.');
-      }
-    }
+  const openEditModal = (user) => {
+    setUserToEdit(user);
+    setIsEditModalOpen(true);
   };
 
-  // Determine what to show based on the admin's role
-  const isSuperuser = userProfile?.role === 'superuser';
-  const pageTitle = isSuperuser ? 'Manage Wardens' : 'Manage Students';
-  const buttonText = isSuperuser ? 'Add New Warden' : 'Add New Student';
+  // Filter lists for the tabs
+  const activeStudents = allStudents.filter(user => user.status === 'active');
+  const inactiveStudents = allStudents.filter(user => user.status === 'inactive');
+  const usersToDisplay = viewStatus === 'active' ? activeStudents : inactiveStudents;
 
   return (
     <div className="page-container">
       <div className="page-header">
-        <h1>{pageTitle}</h1>
-        {userProfile?.role === 'warden' && (
-          <button onClick={() => setIsModalOpen(true)} className="btn-primary">
-            {buttonText}
-          </button>
-        )}
+        <h1>Manage Students</h1>
+        <button onClick={() => setIsAddModalOpen(true)} className="btn-primary">
+          Add New Student
+        </button>
       </div>
+
+      <div className="tab-container warden-tabs">
+        <button 
+          className={`tab-btn ${viewStatus === 'active' ? 'active' : ''}`}
+          onClick={() => setViewStatus('active')}
+        >
+          Current Students ({activeStudents.length})
+        </button>
+        <button 
+          className={`tab-btn ${viewStatus === 'inactive' ? 'active' : ''}`}
+          onClick={() => setViewStatus('inactive')}
+        >
+          Past Students ({inactiveStudents.length})
+        </button>
+      </div>
+
       <div className="card">
-        {loading ? <div className="loading">Loading users...</div> :
+        {loading ? <div className="loading">Loading students...</div> :
          error ? <div className="error-message">{error}</div> :
-         users.length > 0 ? (
+         usersToDisplay.length > 0 ? (
           <table className="data-table">
             <thead>
               <tr>
+                <th>Roll No</th>
                 <th>Name</th>
                 <th>Email</th>
-                <th>Role</th>
-                {userProfile?.role === 'warden' && <th>Roll No</th>}
-                {userProfile?.role === 'warden' && <th>Hostel</th>}
+                <th>Hostel</th>
+                <th>Room</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {users.map(user => (
+              {usersToDisplay.map(user => (
                 <tr key={user.id}>
+                  <td>{user.rollNo || 'N/A'}</td>
                   <td>{user.name}</td>
                   <td>{user.email}</td>
+                  <td>{user.hostelNo || 'N/A'}</td>
+                  <td>{user.roomNo || 'N/A'}</td>
                   <td>
-                    {isSuperuser ? (
-                      // Superuser can change a Warden's role (e.g., to 'student')
-                      <select
-                        value={userRoles[user.id] || user.role}
-                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                        className="role-select"
-                      >
-                        <option value="warden">Warden</option>
-                        <option value="student">Student</option>
-                      </select>
-                    ) : (
-                      // Warden just sees the role as text
-                      <span>{user.role}</span>
-                    )}
-                  </td>
-                  {userProfile?.role === 'warden' && <td>{user.rollNo}</td>}
-                  {userProfile?.role === 'warden' && <td>{user.hostelNo}</td>}
-                  <td>
-                    {userRoles[user.id] !== user.role && (
+                    <button 
+                      onClick={() => openEditModal(user)}
+                      className="btn-add-remarks" 
+                    >
+                      Edit
+                    </button>
+                    
+                    {viewStatus === 'active' ? (
                       <button 
-                        onClick={() => handleSaveChanges(user.id)}
-                        className="btn-save-role"
+                        onClick={() => handleStatusUpdate(user.id, 'inactive')}
+                        className="btn-remove" 
                       >
-                        Save
+                        Remove
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => handleStatusUpdate(user.id, 'active')}
+                        className="btn-restore" // Using new language
+                      >
+                        Restore
                       </button>
                     )}
                   </td>
@@ -135,18 +141,27 @@ function AdminUsers() {
             </tbody>
           </table>
         ) : (
-          <p>No users found.</p>
+          <p>No {viewStatus === 'active' ? 'Current' : 'Past'} students found.</p>
         )}
       </div>
 
-      {isModalOpen && (
-        <AddStudentModal 
-          onClose={() => setIsModalOpen(false)}
-          onStudentAdded={fetchUsersData} // Refresh the user list on success
+      {isAddModalOpen && (
+        <AddUserModal 
+          onClose={() => setIsAddModalOpen(false)}
+          onUserAdded={fetchStudents} 
+          roleToCreate="student"
+        />
+      )}
+
+      {isEditModalOpen && (
+        <EditUserModal 
+          onClose={() => setIsEditModalOpen(false)}
+          onUserUpdated={fetchStudents} 
+          userToEdit={userToEdit}
         />
       )}
     </div>
   );
 }
 
-export default AdminUsers;
+export default WardenUsersPage;

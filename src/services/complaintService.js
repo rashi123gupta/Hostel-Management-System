@@ -1,6 +1,6 @@
 // src/services/complaintService.js
 import { db } from './firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 
 /**
  * Adds a new complaint to the 'complaints' collection.
@@ -65,4 +65,29 @@ export const updateComplaintStatus = async (complaintId, newStatus, resolutionDe
         resolutionDetails: resolutionDetails || '-', // Ensure it's not undefined
         updatedAt: serverTimestamp(),
     });
+};
+
+/**
+ * Sets up a real-time listener for a student's complaints.
+ * @param {string} studentId - The UID of the student.
+ * @param {function} callback - The function to call with the updated complaints list.
+ * @returns {function} - The unsubscribe function for the listener.
+ */
+export const onStudentComplaintsChange = (studentId, callback) => {
+  if (!studentId) {
+    console.error("Student ID is required to set up listener.");
+    return () => {}; // Return an empty unsubscribe function
+  }
+
+  const q = query(collection(db, 'complaints'), where('studentId', '==', studentId));
+  
+  // onSnapshot returns an unsubscribe function
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const complaints = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(complaints); // Send the new list to our component
+  }, (error) => {
+    console.error("Error in complaint listener: ", error);
+  });
+
+  return unsubscribe;
 };

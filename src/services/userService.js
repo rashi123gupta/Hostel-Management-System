@@ -1,37 +1,50 @@
 import { db, functions, auth } from './firebase';
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 
 const CREATE_USER_URL = "https://us-central1-hostel-management-system-fde00.cloudfunctions.net/createNewUser";
 
 /**
- * Calls our Cloud Function to create a new user by manually passing the auth token.
- * @param {object} userData - Data for the new user (email, password, name, roleToCreate, etc.)
+ * Calls our HTTP Cloud Function to create a new user using fetch.
+ * @param {object} userData - Data for the new user (email, password, name, etc.)
  */
 export const createNewUser = async (userData) => {
   
-  // 1. Get the currently logged-in user from our 'auth' instance
+  // 1. PASTE YOUR FUNCTION URL HERE
+  const functionUrl = "https://us-central1-hostel-management-system-fde00.cloudfunctions.net/createNewUser";
+
   const user = auth.currentUser;
-  
   if (!user) {
-    // This should not happen if our ProtectedRoute is working, but it's a good safeguard.
     throw new Error("No user is logged in.");
   }
 
-  // 2. Manually get the user's ID Token (their "credentials")
+  // 2. Get the ID Token
   const idToken = await user.getIdToken();
 
-  // 3. Get our callable function (this syntax is correct)
-  const createUser = httpsCallable(functions, 'createNewUser'); 
-  
   try {
-    // 4. Pass BOTH the user data AND the token
-    const result = await createUser({ 
-      userData: userData,  // The data for the new user
-      idToken: idToken     // The token of the user *making* the request
+    // 3. Use standard 'fetch'
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // 4. Manually set the Authorization header
+        'Authorization': `Bearer ${idToken}` 
+      },
+      // 5. Wrap the payload in a 'data' object to match
+      //    the 'onCall' format our function still expects.
+      body: JSON.stringify({ data: userData }) 
     });
-    
-    return result.data;
+
+    if (!response.ok) {
+      // If the server response is not 200-299, throw an error
+      const errorText = await response.text();
+      throw new Error(errorText || "Failed to create user.");
+    }
+
+    const result = await response.json();
+    // Our function sends back { data: { success: true, ... } }
+    return result.data; 
+
   } catch (error) {
     console.error("Error calling createNewUser function:", error);
     throw new Error(error.message);
@@ -72,3 +85,27 @@ export const getAllUsers = async () => {
     return userList;
 };
 
+/**
+ * Fetches all users that match a specific role.
+ * @param {string} role - The role to filter by (e.g., 'student', 'warden').
+ * @returns {Promise<Array<object>>} - An array of user objects.
+ */
+export const getUsersByRole = async (role) => {
+  const usersCollection = collection(db, 'users');
+  const q = query(usersCollection, where('role', '==', role));
+  const userSnapshot = await getDocs(q);
+  const userList = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return userList;
+};
+
+/**
+ * Updates the 'status' field of a user document (for soft delete).
+ * @param {string} userId - The UID of the user to update.
+ * @param {string} newStatus - The new status ('active' or 'inactive').
+ */
+export const updateUserStatus = async (userId, newStatus) => {
+  const userDocRef = doc(db, 'users', userId);
+  await updateDoc(userDocRef, {
+    status: newStatus
+  });
+};

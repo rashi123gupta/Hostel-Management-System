@@ -1,51 +1,54 @@
-// src/app/student/leaves/page.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react'; 
 import { useAuth } from '../../../context/AuthContext';
-import { getStudentLeaves } from '../../../services/leaveService';
+import { onStudentLeavesChange } from '../../../services/leaveService';
 import RequestLeaveForm from '../../../components/RequestLeaveForm';
+import '../../../styles/global.css'; 
 
 export default function StudentLeavesPage() {
   const { currentUser } = useAuth();
-  const [leaves, setLeaves] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [leaves, setLeaves] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const fetchLeaves = React.useCallback(async () => {
-    if (!currentUser) return;
-
-    setLoading(true);
-    try {
-      const studentLeaves = await getStudentLeaves(currentUser.uid);
-      setLeaves(studentLeaves);
-    } catch (err) {
-      setError('Failed to fetch leave requests.');
-      console.error(err);
-    } finally {
+  // useEffect now sets up the real-time listener 
+  useEffect(() => {
+    if (!currentUser) {
       setLoading(false);
+      return;
     }
-  }, [currentUser]);
+    
+    setLoading(true);
 
-  React.useEffect(() => {
-    fetchLeaves();
-  }, [fetchLeaves]);
+    // Call the listener function. It returns an 'unsubscribe' function.
+    const unsubscribe = onStudentLeavesChange(
+      currentUser.uid, 
+      (updatedLeaves) => {
+        // This callback runs every time the data changes in
+        // Firestore, including when a new leave is added.
+        setLeaves(updatedLeaves);
+        setLoading(false);
+      }
+    );
 
-  // Function to be called when a new leave is successfully added
-  const handleLeaveAdded = () => {
-    fetchLeaves(); // Re-fetch the leaves to show the new one
-  };
-  
-  // This function now only needs to format the 'appliedAt' timestamp
+    // The cleanup function for useEffect:
+    // This runs when the component unmounts, stopping the listener
+    // to prevent memory leaks.
+    return () => {
+      unsubscribe();
+    };
+
+  }, [currentUser]); 
+
   const formatDate = (timestamp) => {
-    if (timestamp && timestamp.toDate) {
-      return timestamp.toDate().toLocaleDateString();
+    if (timestamp && typeof timestamp.toDate === 'function') {
+      return timestamp.toDate().toLocaleDateString('en-GB'); // Format as DD/MM/YYYY
     }
     return 'N/A';
   };
 
   const getStatusClass = (status) => {
     if (!status) return 'status-pending';
-    // Make status check case-insensitive to handle 'pending' or 'Pending'
     const lowerStatus = status.toLowerCase(); 
     switch (lowerStatus) {
       case 'approved':
@@ -58,21 +61,20 @@ export default function StudentLeavesPage() {
     }
   };
 
-
   return (
     <div className="page-container">
       <div className="page-header">
-        <h1 className="page-title">Your Leave Requests</h1>
+        <h1 className="page-title">My Leaves</h1>
         <button onClick={() => setIsModalOpen(true)} className="btn-primary">
           Request Leave
         </button>
       </div>
 
-      {loading && <p>Loading your leave history...</p>}
-      {error && <p className="error-message">{error}</p>}
+      {loading && <div className="loading">Loading your leave history...</div>}
+      {error && <div className="error-message">{error}</div>}
       
       {!loading && !error && (
-        <div className="table-container">
+        <div className="card">
           {leaves.length > 0 ? (
             <table className="data-table">
               <thead>
@@ -110,12 +112,12 @@ export default function StudentLeavesPage() {
 
       {isModalOpen && (
         <RequestLeaveForm
-          isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onSuccess={handleLeaveAdded}
+          // The listener will automatically update the list.
+          // We just need to close the modal on success.
+          onLeaveAdded={() => setIsModalOpen(false)} 
         />
       )}
     </div>
   );
 }
-

@@ -1,45 +1,71 @@
-import React, { useState } from 'react';
+// src/pages/LoginPage.jsx
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { logIn } from '../../services/authService';
 
 function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
+  const [localError, setLocalError] = useState('');
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { currentUser, authError, setAuthError } = useAuth();
+
+  // Navigate only when logged in and active
+  useEffect(() => {
+    if (currentUser) navigate('/');
+  }, [currentUser, navigate]);
+
+  // Display any global auth error (from AuthContext)
+  useEffect(() => {
+    if (authError) {
+      setLocalError(authError);
+      // don't clear immediately — let user see the message
+    }
+  }, [authError]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setLocalError(''); // clear local error on typing
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setLocalError('');
+    setAuthError(null);
+
     try {
       await logIn(formData.email, formData.password);
-      // The AuthContext and App.js redirect logic will handle
-      // sending the user to the correct dashboard.
-      navigate('/'); 
     } catch (err) {
-      setError(err.message);
+      let friendlyError = 'An error occurred. Please try again.';
+      if (err.code === 'auth/invalid-credential') {
+        friendlyError = 'Invalid email or password. Please try again.';
+      } else if (err.code === 'auth/user-disabled') {
+        friendlyError = 'Your account has been disabled. Please contact your warden.';
+      }
+      setLocalError(friendlyError);
     } finally {
       setLoading(false);
     }
   };
 
-  if (currentUser) {
-    navigate('/');
-    return null;
-  }
+  // Prevent setState during redirect render
+  if (currentUser) return null;
 
   return (
     <div className="auth-container">
       <h2>Hostel Management Login</h2>
-      {error && <p className="error-message">{error}</p>}
-      <form onSubmit={handleLogin} className="auth-form">
+
+      {/* Error Message Display */}
+      {(localError || authError) && (
+        <p className="error-message" style={{ color: 'red', marginBottom: '1rem' }}>
+          {localError || authError}
+        </p>
+      )}
+
+      <form onSubmit={handleLogin} className="auth-form" autoComplete="off">
         <div className="form-group">
           <label htmlFor="email">Email Address</label>
           <input

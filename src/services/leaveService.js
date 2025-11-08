@@ -1,6 +1,6 @@
 // src/services/leaveService.js
 import { db } from './firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 
 /**
  * Helper function to format a Date object or a date string into DD-MM-YYYY format.
@@ -85,3 +85,29 @@ export const updateLeaveStatus = async (leaveId, newStatus, adminRemarks) => {
         updatedAt: serverTimestamp(),
     });
 };
+
+/**
+ * Sets up a real-time listener for a student's leave requests.
+ * @param {string} studentId - The UID of the student.
+ * @param {function} callback - The function to call with the updated leaves list.
+ * @returns {function} - The unsubscribe function for the listener.
+ */
+export const onStudentLeavesChange = (studentId, callback) => {
+  if (!studentId) {
+    console.error("Student ID is required to set up listener.");
+    return () => {}; // Return an empty unsubscribe function
+  }
+
+  const q = query(collection(db, 'leaves'), where('studentId', '==', studentId));
+  
+  // onSnapshot returns an unsubscribe function
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const leaves = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(leaves); // Send the new list to our component
+  }, (error) => {
+    console.error("Error in leave listener: ", error);
+  });
+
+  return unsubscribe;
+};
+

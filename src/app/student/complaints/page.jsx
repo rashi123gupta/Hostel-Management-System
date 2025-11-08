@@ -1,44 +1,49 @@
-import React from 'react';
-import { useAuth } from '../../../context/AuthContext';
-import { getStudentComplaints } from '../../../services/complaintService';
+import React, { useState, useEffect } from 'react';
 import AddComplaintForm from '../../../components/AddComplaintForm';
+import { onStudentComplaintsChange } from '../../../services/complaintService';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function StudentComplaintsPage() {
   const { currentUser } = useAuth();
-  const [complaints, setComplaints] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [complaints, setComplaints] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const fetchComplaints = React.useCallback(async () => {
-    if (!currentUser) return;
-    setLoading(true);
-    try {
-      const studentComplaints = await getStudentComplaints(currentUser.uid);
-      setComplaints(studentComplaints);
-    } catch (err) {
-      setError('Failed to fetch complaints.');
-      console.error(err);
-    } finally {
+  // useEffect now sets up the real-time listener 
+  useEffect(() => {
+    if (!currentUser) {
       setLoading(false);
+      return;
     }
-  }, [currentUser]);
+    
+    setLoading(true);
 
-  React.useEffect(() => {
-    fetchComplaints();
-  }, [fetchComplaints]);
+    // Call the listener function. It returns an 'unsubscribe' function.
+    const unsubscribe = onStudentComplaintsChange(
+      currentUser.uid, 
+      (updatedComplaints) => {
+        // This callback runs every time the data changes
+        setComplaints(updatedComplaints);
+        setLoading(false);
+      }
+    );
 
+    // The cleanup function for useEffect
+    return () => {
+      unsubscribe();
+    };
+
+  }, [currentUser]); // Re-run this effect if the user changes
+
+  // This function now only needs to close the modal 
   const handleComplaintAdded = () => {
-    fetchComplaints(); // Re-fetch complaints to show the new one
     setIsModalOpen(false);
   };
   
   const formatDateForDisplay = (dateValue) => {
-    if (dateValue && typeof dateValue === 'object' && dateValue.toDate) {
-      return dateValue.toDate().toLocaleDateString();
-    }
-    if (typeof dateValue === 'string') {
-      return dateValue;
+    if (dateValue && typeof dateValue.toDate === 'function') {
+      return dateValue.toDate().toLocaleDateString('en-GB'); // DD/MM/YYYY
     }
     return 'N/A';
   };
@@ -48,7 +53,7 @@ export default function StudentComplaintsPage() {
     const lowerStatus = status.toLowerCase(); 
     switch (lowerStatus) {
       case 'resolved':
-        return 'status-approved';
+        return 'status-approved'; 
       case 'pending':
       default:
         return 'status-pending';
@@ -58,17 +63,17 @@ export default function StudentComplaintsPage() {
   return (
     <div className="page-container">
       <div className="page-header">
-        <h1 className="page-title">Your Complaints</h1>
+        <h1 className="page-title">My Complaints</h1>
         <button onClick={() => setIsModalOpen(true)} className="btn-primary">
           Add Complaint
         </button>
       </div>
 
-      {loading && <p>Loading your complaint history...</p>}
-      {error && <p className="error-message">{error}</p>}
+      {loading && <div className="loading">Loading your complaint history...</div>}
+      {error && <div className="error-message">{error}</div>}
       
       {!loading && !error && (
-        <div className="table-container">
+        <div className="card">
           {complaints.length > 0 ? (
             <table className="data-table">
               <thead>
@@ -102,9 +107,8 @@ export default function StudentComplaintsPage() {
 
       {isModalOpen && (
         <AddComplaintForm
-          isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onSuccess={handleComplaintAdded}
+          onComplaintAdded={handleComplaintAdded}
         />
       )}
     </div>

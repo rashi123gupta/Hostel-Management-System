@@ -8,6 +8,7 @@ import Navbar from './components/Navbar';
 
 // Page Components
 import LoginPage from './app/login/page';
+// SignupPage is removed
 
 // Student Page Components
 import StudentDashboard from './app/student/dashboard/page';
@@ -16,12 +17,16 @@ import StudentComplaintsPage from './app/student/complaints/page';
 
 // Admin/Warden Page Components
 import AdminDashboard from './app/admin/dashboard/page';
-import AdminUsers from './app/admin/users/page';
+// --- MODIFICATION: Renamed import ---
+import WardenUsersPage from './app/admin/users/page'; // This is the Warden's page
 import AdminLeaves from './app/admin/leaves/page';
 import AdminComplaints from './app/admin/complaints/page';
 
 // Superuser Page Components
 import SuperuserDashboard from './app/superuser/dashboard/page';
+// --- MODIFICATION: New import for the superuser's page ---
+import SuperuserUsersPage from './app/superuser/users/page.jsx';
+
 
 /**
  * A component that intelligently redirects logged-in users to their
@@ -77,9 +82,10 @@ function App() {
               path="/warden/dashboard" 
               element={<ProtectedRoute role="warden"><AdminDashboard /></ProtectedRoute>} 
             />
+            {/* --- MODIFICATION: Points to the WardenUsersPage --- */}
             <Route 
               path="/warden/users" 
-              element={<ProtectedRoute role="warden"><AdminUsers /></ProtectedRoute>} 
+              element={<ProtectedRoute role="warden"><WardenUsersPage /></ProtectedRoute>} 
             />
             <Route 
               path="/warden/leaves" 
@@ -96,8 +102,8 @@ function App() {
               element={<ProtectedRoute role="superuser"><SuperuserDashboard /></ProtectedRoute>} 
             />
             <Route 
-              path="/superuser/wardens" 
-              element={<ProtectedRoute role="superuser"><AdminUsers /></ProtectedRoute>} 
+              path="/superuser/users" 
+              element={<ProtectedRoute role="superuser"><SuperuserUsersPage /></ProtectedRoute>} 
             />
 
             {/* --- Redirect Logic --- */}

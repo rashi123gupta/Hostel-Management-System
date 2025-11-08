@@ -5,10 +5,10 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
+import { getUserProfile } from './userService'; 
 
 /**
- * Signs up a new user with email, password, and additional profile data.
- * This function now correctly adds the 'role' and 'createdAt' fields.
+ * Signs up a new user...
  */
 export const signUp = async (email, password, additionalData) => {
   try {
@@ -19,8 +19,9 @@ export const signUp = async (email, password, additionalData) => {
     await setDoc(doc(db, "users", user.uid), {
       ...additionalData,         // name, rollNo, hostelNo, roomNo
       email: user.email,
-      role: "student",          // <-- FIXED: Default role is now added
-      createdAt: new Date(),    // <-- FIXED: Creation timestamp is now added
+      role: "student",          
+      createdAt: new Date(),
+      status: "active" 
     });
 
     return { success: true, user };
@@ -35,16 +36,20 @@ export const signUp = async (email, password, additionalData) => {
 };
 
 /**
- * Logs in a user with their email and password.
+ * Logs in a user AND checks their authorization.
  */
 export const logIn = async (email, password) => {
   try {
+    // --- MODIFICATION: This function will NOW ONLY log in. ---
+    // It will NOT check for status. The AuthContext will handle that.
+    // This solves the "Missing or insufficient permissions" race condition.
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return { success: true, user: userCredential.user };
+
   } catch (error) {
-    const errorMessage = 'Invalid email or password. Please try again.';
+    // Re-throw the error so the LoginPage can catch it
     console.error("Login Error:", error.message);
-    return { success: false, error: errorMessage };
+    throw error; 
   }
 };
 
@@ -54,4 +59,3 @@ export const logIn = async (email, password) => {
 export const logOut = () => {
   return signOut(auth);
 };
-

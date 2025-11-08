@@ -19,9 +19,7 @@ function Navbar() {
   const renderLinks = () => {
     if (!currentUser) {
       // No user, show login (Signup is removed)
-      return (
-        <Link to="/login">Login</Link>
-      );
+      return null;
     }
 
     // Use userProfile.role to determine links
@@ -47,7 +45,7 @@ function Navbar() {
         return (
           <>
             <Link to="/superuser/dashboard">Dashboard</Link>
-            <Link to="/superuser/wardens">Manage Wardens</Link>
+            <Link to="/superuser/users">Manage Users</Link>
           </>
         );
       default:

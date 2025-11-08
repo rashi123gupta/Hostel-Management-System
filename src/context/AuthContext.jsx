@@ -1,56 +1,86 @@
 // src/context/AuthContext.jsx
 import React, { useContext, useState, useEffect } from 'react';
-import { auth } from '../services/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { getUserProfile } from '../services/userService';
+import { auth, db } from '../services/firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onSnapshot, doc } from 'firebase/firestore';
 
-// 1. Create the context
 const AuthContext = React.createContext();
 
-// 2. Create the custom hook for consuming the context
-// This is what your components will use to get the auth state
 export function useAuth() {
   return useContext(AuthContext);
 }
 
-// 3. Create the Provider component
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    let unsubscribeProfile = () => {};
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
+
+      // Clear profile & stop old listener
+      unsubscribeProfile();
+      setUserProfile(null);
+
       if (user) {
-        // If user is logged in, fetch their profile from Firestore
-        const profile = await getUserProfile(user.uid);
-        setUserProfile(profile);
+        const docRef = doc(db, 'users', user.uid);
+        unsubscribeProfile = onSnapshot(
+          docRef,
+          async (docSnapshot) => {
+            if (docSnapshot.exists()) {
+              const profile = docSnapshot.data();
+              if (profile.status === 'active') {
+                setUserProfile({ id: docSnapshot.id, ...profile });
+                setAuthError(null);
+              } else {
+                console.log("User inactive → sign out");
+                setUserProfile(null);
+                setAuthError('Your account has been disabled. Please contact warden.');
+                await signOut(auth);
+              }
+            } else {
+              console.log("Profile doc missing → sign out");
+              setUserProfile(null);
+              setAuthError('User profile not found.');
+              await signOut(auth);
+            }
+            setLoading(false);
+          },
+          (error) => {
+            console.error("Error listening to user profile:", error);
+            setUserProfile(null);
+            setAuthError('Error fetching user profile.');
+            setLoading(false);
+          }
+        );
       } else {
-        // If user is logged out, clear the profile
+        // user = null
         setUserProfile(null);
+        setLoading(false);
       }
-      // Set loading to false once we have the auth state and profile
-      setLoading(false);
     });
 
-    // Cleanup subscription on unmount
-    return unsubscribe;
+    return () => {
+      unsubscribeAuth();
+      unsubscribeProfile();
+    };
   }, []);
 
   const value = {
     currentUser,
     userProfile,
     loading,
+    authError,
+    setAuthError,
   };
 
-  // The Provider component makes the 'value' available to all children
-  // We removed the "!loading &&" check here to simplify. The loading
-  // check is now correctly handled inside App.js.
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }
-

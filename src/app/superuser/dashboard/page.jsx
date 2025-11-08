@@ -1,76 +1,73 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { auth } from '../../../services/firebase';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { getAllUsers } from '../../../services/userService';
-import { createNewUser } from '../../../services/userService';
+import EditProfileModal from '../../../components/EditProfileModal';
 import '../../../styles/global.css';
 
 function SuperuserDashboard() {
   const { userProfile } = useAuth();
-  const [summary, setSummary] = useState({ totalWardens: 0, totalStudents: 0 });
+  const navigate = useNavigate(); // For clickable cards
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  // State for the "Create Warden" form
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
-  const [formLoading, setFormLoading] = useState(false);
-  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const fetchSummaryData = useCallback(async () => {
+  // Summary state 
+  const [summary, setSummary] = useState({
+    activeWardens: 0,
+    inactiveWardens: 0,
+    activeStudents: 0,
+    inactiveStudents: 0,
+  });
+
+  // Data fetching logic
+  const fetchDashboardData = useCallback(async () => {
+    if (!userProfile) return;
     setLoading(true);
     try {
       const allUsers = await getAllUsers();
-      const wardens = allUsers.filter(u => u.role === 'warden').length;
-      const students = allUsers.filter(u => u.role === 'student').length;
-      setSummary({ totalWardens: wardens, totalStudents: students });
+      // Filter out the superuser themselves
+      const otherUsers = allUsers.filter(u => u.id !== userProfile.id);
+
+      const wardens = otherUsers.filter(u => u.role === 'warden');
+      const students = otherUsers.filter(u => u.role === 'student');
+
+      setSummary({
+        activeWardens: wardens.filter(u => u.status === 'active').length,
+        inactiveWardens: wardens.filter(u => u.status === 'inactive').length,
+        activeStudents: students.filter(u => u.status === 'active').length,
+        inactiveStudents: students.filter(u => u.status === 'inactive').length,
+      });
+
     } catch (err) {
-      console.error("Failed to fetch user data:", err);
+      setError('Could not load dashboard data.');
+      console.error(err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userProfile]); 
 
   useEffect(() => {
-    fetchSummaryData();
-  }, [fetchSummaryData]);
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  // Functions to handle card clicks
+  const handleWardenCardClick = () => {
+    // No state needed, as 'warden' is the default view
+    navigate('/superuser/users');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      alert("You must be logged in with a Superuser account to create a Warden.");
-      return;
-    }
-    console.log(auth.currentUser);
-
-    setFormLoading(true);
-    setMessage('');
-    setError('');
-
-    try {
-      const userData = {
-        ...formData,
-        roleToCreate: 'warden',
-      };
-      const result = await createNewUser(userData);
-      setMessage(result.message);
-      setFormData({ name: '', email: '', password: '' }); 
-      fetchSummaryData(); 
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setFormLoading(false);
-    }
+  const handleStudentCardClick = () => {
+    // Pass state to tell the next page to default to the 'student' tab
+    navigate('/superuser/users', { state: { defaultRole: 'student' } });
   };
+
+  if (loading) return <div className="loading">Loading Dashboard...</div>;
+  if (error) return <div className="error-message">{error}</div>;
 
   return (
     <div className="page-container">
-      {/* Profile Card */}
+      {/* Profile Details Card */}
       <div className="user-profile-container card">
         <div className="profile-image">
           <img 
@@ -83,64 +80,52 @@ function SuperuserDashboard() {
           <p className="user-info">Role: {userProfile?.role}</p>
           <p className="user-info">Email: {userProfile?.email}</p>
         </div>
+        <button onClick={() => setIsEditModalOpen(true)} className="btn-edit-profile">
+          Edit Profile
+        </button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="summary-card card">
-        <h3>System Overview</h3>
-        {loading ? <div className="loading">Loading stats...</div> : (
-          <div className="summary-grid">
-            <div className="summary-item card">
-              <p>Total Wardens</p>
-              <h4>{summary.totalWardens}</h4>
-            </div>
-            <div className="summary-item card">
-              <p>Total Students</p>
-              <h4>{summary.totalStudents}</h4>
-            </div>
+      {/* Warden Overview Card */}
+      <div 
+        className="summary-card card clickable-card" 
+        onClick={handleWardenCardClick}
+      >
+        <h3>Warden Overview</h3>
+        <div className="summary-grid">
+          <div className="summary-item card">
+            <p>Current Wardens</p>
+            <h4>{summary.activeWardens}</h4>
           </div>
-        )}
+          <div className="summary-item card">
+            <p>Past Wardens</p>
+            <h4>{summary.inactiveWardens}</h4>
+          </div>
+        </div>
       </div>
 
-      {/* Create Warden Form */}
-      <div className="card">
-        <h3>Create New Warden</h3>
-        <p>Use this form to create a new warden account.</p>
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="name">Full Name</label>
-            <input
-              type="text" id="name" name="name"
-              value={formData.name} onChange={handleChange}
-              required className="form-input"
-            />
+      {/* Student Overview Card */}
+      <div 
+        className="summary-card card clickable-card" 
+        onClick={handleStudentCardClick}
+      >
+        <h3>Student Overview</h3>
+        <div className="summary-grid">
+          <div className="summary-item card">
+            <p>Current Students</p>
+            <h4>{summary.activeStudents}</h4>
           </div>
-          <div className="form-group">
-            <label htmlFor="email">Email Address</label>
-            <input
-              type="email" id="email" name="email"
-              value={formData.email} onChange={handleChange}
-              required className="form-input"
-            />
+          <div className="summary-item card">
+            <p>Past Students</p>
+            <h4>{summary.inactiveStudents}</h4>
           </div>
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password" id="password" name="password"
-              value={formData.password} onChange={handleChange}
-              required minLength="6" className="form-input"
-              placeholder="Min 6 characters"
-            />
-          </div>
-          <div className="modal-actions">
-            <button type="submit" className="btn-primary" disabled={formLoading}>
-              {formLoading ? 'Creating...' : 'Create Warden'}
-            </button>
-          </div>
-          {message && <p style={{ color: 'green', marginTop: '1rem' }}>{message}</p>}
-          {error && <p className="error-message">{error}</p>}
-        </form>
+        </div>
       </div>
+  
+      {isEditModalOpen && (
+        <EditProfileModal 
+          onClose={() => setIsEditModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
