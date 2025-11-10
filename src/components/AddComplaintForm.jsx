@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { addComplaint } from '../services/complaintService';
 
-function AddComplaintModal({ onClose }) {
+function AddComplaintForm({ onClose, onComplaintAdded }) {
   const { currentUser } = useAuth();
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
@@ -18,9 +18,9 @@ function AddComplaintModal({ onClose }) {
     setError('');
 
     try {
-      await addComplaint(currentUser.uid, { description });
+      await addComplaint(description);
       alert('Complaint submitted successfully!');
-      onClose();
+      onComplaintAdded(); 
     } catch (err) {
       setError('Failed to submit complaint. Please try again.');
       console.error(err);
@@ -35,7 +35,6 @@ function AddComplaintModal({ onClose }) {
         <h3>Add New Complaint</h3>
         {error && <p className="error-message">{error}</p>}
         
-        {/* The form structure is slightly changed for better styling */}
         <form onSubmit={handleSubmit}>
           <div className="modal-form-body">
             <div className="form-group">
@@ -67,5 +66,4 @@ function AddComplaintModal({ onClose }) {
   );
 }
 
-export default AddComplaintModal;
-
+export default AddComplaintForm;

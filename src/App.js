@@ -19,17 +19,17 @@ import LoginPage from './app/login/page';
 import StudentDashboard from './app/student/dashboard/page';
 import StudentLeavesPage from './app/student/leaves/page';
 import StudentComplaintsPage from './app/student/complaints/page';
+import MessFeedbackPage from './app/student/messfeedback/page';
 
 // Admin/Warden Page Components
 import AdminDashboard from './app/admin/dashboard/page';
-// --- MODIFICATION: Renamed import ---
 import WardenUsersPage from './app/admin/users/page'; // This is the Warden's page
 import AdminLeaves from './app/admin/leaves/page';
 import AdminComplaints from './app/admin/complaints/page';
+import WardenMessFeedbackPage from './app/admin/messfeedback/page.jsx';
 
 // Superuser Page Components
 import SuperuserDashboard from './app/superuser/dashboard/page';
-// --- MODIFICATION: New import for the superuser's page ---
 import SuperuserUsersPage from './app/superuser/users/page.jsx';
 
 
@@ -85,9 +85,10 @@ function App() {
     <Navbar />
     <main className="main-content">
       <Routes>
-
+        {/* --- Public Routes --- */}
         <Route path="/login" element={<LoginPage />} />
 
+        {/* --- Protected Student Routes --- */}
         <Route 
           path="/student/dashboard" 
           element={<ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>} 
@@ -100,7 +101,12 @@ function App() {
           path="/student/complaints" 
           element={<ProtectedRoute role="student"><StudentComplaintsPage /></ProtectedRoute>} 
         />
+        <Route 
+              path="/student/messfeedback" 
+              element={<ProtectedRoute role="student"><MessFeedbackPage /></ProtectedRoute>} 
+        />
 
+        {/* --- Protected Warden Routes --- */}
         <Route 
           path="/warden/dashboard" 
           element={<ProtectedRoute role="warden"><AdminDashboard /></ProtectedRoute>} 
@@ -117,7 +123,12 @@ function App() {
           path="/warden/complaints" 
           element={<ProtectedRoute role="warden"><AdminComplaints /></ProtectedRoute>} 
         />
+        <Route 
+              path="/warden/messfeedback" 
+              element={<ProtectedRoute role="warden"><WardenMessFeedbackPage /></ProtectedRoute>} 
+        />
 
+        {/* --- Protected Superuser Routes --- */}
         <Route 
           path="/superuser/dashboard" 
           element={<ProtectedRoute role="superuser"><SuperuserDashboard /></ProtectedRoute>} 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'; 
 import { useAuth } from '../../../context/AuthContext';
-import { onStudentLeavesChange } from '../../../services/leaveService';
-import RequestLeaveForm from '../../../components/RequestLeaveForm';
+import { onStudentLeavesChange } from '../../../services/leaveService'; 
+import RequestLeaveForm from '../../../components/RequestLeaveForm'; 
 import '../../../styles/global.css'; 
 
 export default function StudentLeavesPage() {
@@ -11,7 +11,6 @@ export default function StudentLeavesPage() {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // useEffect now sets up the real-time listener 
   useEffect(() => {
     if (!currentUser) {
       setLoading(false);
@@ -19,30 +18,34 @@ export default function StudentLeavesPage() {
     }
     
     setLoading(true);
+    setError(null); 
 
-    // Call the listener function. It returns an 'unsubscribe' function.
     const unsubscribe = onStudentLeavesChange(
       currentUser.uid, 
       (updatedLeaves) => {
-        // This callback runs every time the data changes in
-        // Firestore, including when a new leave is added.
         setLeaves(updatedLeaves);
+        setLoading(false);
+      },
+      (err) => {
+        console.error(err);
+        setError('Failed to load leave requests.');
         setLoading(false);
       }
     );
 
-    // The cleanup function for useEffect:
-    // This runs when the component unmounts, stopping the listener
-    // to prevent memory leaks.
     return () => {
       unsubscribe();
     };
 
   }, [currentUser]); 
 
+  const handleLeaveAdded = () => {
+    setIsModalOpen(false);
+  };
+  
   const formatDate = (timestamp) => {
-    if (timestamp && typeof timestamp.toDate === 'function') {
-      return timestamp.toDate().toLocaleDateString('en-GB'); // Format as DD/MM/YYYY
+    if (timestamp && timestamp.toDate) {
+      return timestamp.toDate().toLocaleDateString('en-GB');
     }
     return 'N/A';
   };
@@ -60,6 +63,7 @@ export default function StudentLeavesPage() {
         return 'status-pending';
     }
   };
+
 
   return (
     <div className="page-container">
@@ -113,9 +117,7 @@ export default function StudentLeavesPage() {
       {isModalOpen && (
         <RequestLeaveForm
           onClose={() => setIsModalOpen(false)}
-          // The listener will automatically update the list.
-          // We just need to close the modal on success.
-          onLeaveAdded={() => setIsModalOpen(false)} 
+          onLeaveAdded={handleLeaveAdded}
         />
       )}
     </div>

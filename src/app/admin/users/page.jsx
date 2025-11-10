@@ -60,9 +60,22 @@ function WardenUsersPage() {
     setIsEditModalOpen(true);
   };
 
-  // Filter lists for the tabs
-  const activeStudents = allStudents.filter(user => user.status === 'active');
-  const inactiveStudents = allStudents.filter(user => user.status === 'inactive');
+  const sortStudentsByRollNo = (a, b) => {
+    const rollA = a.rollNo || '';
+    const rollB = b.rollNo || '';
+    // 'numeric: true' correctly sorts strings that contain numbers
+    return rollA.localeCompare(rollB, undefined, { numeric: true });
+  };
+
+  // Filter and Sort lists for the tabs 
+  const activeStudents = allStudents
+    .filter(user => user.status === 'active')
+    .sort(sortStudentsByRollNo); // Sort the active list
+
+  const inactiveStudents = allStudents
+    .filter(user => user.status === 'inactive')
+    .sort(sortStudentsByRollNo); // Sort the inactive list
+
   const usersToDisplay = viewStatus === 'active' ? activeStudents : inactiveStudents;
 
   return (
@@ -130,7 +143,7 @@ function WardenUsersPage() {
                     ) : (
                       <button 
                         onClick={() => handleStatusUpdate(user.id, 'active')}
-                        className="btn-restore" // Using new language
+                        className="btn-restore" 
                       >
                         Restore
                       </button>

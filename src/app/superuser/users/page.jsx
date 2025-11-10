@@ -12,7 +12,6 @@ function SuperuserUsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  // --- MODIFICATION: Read navigation state to set default tab ---
   const location = useLocation();
   const [viewRole, setViewRole] = useState(location.state?.defaultRole || 'warden');
   const [viewStatus, setViewStatus] = useState('active');
@@ -41,16 +40,16 @@ function SuperuserUsersPage() {
   }, [fetchAllUsers]);
 
   const handleStatusUpdate = async (userId, newStatus) => {
-    setAllUsers(prevUsers => 
+   setAllUsers(prevUsers => 
       prevUsers.map(user => 
         user.id === userId ? { ...user, status: newStatus } : user
       )
     );
     try {
       await updateUserStatus(userId, newStatus);
-      alert(`Warden has been ${newStatus === 'active' ? 'Restored' : 'Removed'}.`);
+      alert(`${viewRole} has been ${newStatus === 'active' ? 'Restored' : 'Removed'}.`);
     } catch (err) {
-      setError(`Failed to update warden status.`);
+      setError(`Failed to update ${viewRole} status.`);
       setAllUsers(prevUsers => 
         prevUsers.map(user => 
           user.id === userId ? { ...user, status: newStatus === 'active' ? 'inactive' : 'active' } : user
@@ -64,18 +63,34 @@ function SuperuserUsersPage() {
     setIsEditModalOpen(true);
   };
 
+  // Helper function to sort students by Roll No
+  const sortStudentsByRollNo = (a, b) => {
+    const rollA = a.rollNo || '';
+    const rollB = b.rollNo || '';
+    return rollA.localeCompare(rollB, undefined, { numeric: true });
+  };
+
+  // Helper function to sort wardens by Name (alphabetical)
+  const sortWardensByName = (a, b) => {
+    const nameA = a.name || '';
+    const nameB = b.name || '';
+    return nameA.localeCompare(nameB); // A-Z ascending order
+  };
+
   const wardens = allUsers.filter(user => user.role === 'warden');
   const students = allUsers.filter(user => user.role === 'student');
 
   let usersToDisplay = [];
   if (viewRole === 'warden') {
-    usersToDisplay = viewStatus === 'active' 
+    const filteredWardens = viewStatus === 'active' 
       ? wardens.filter(user => user.status === 'active')
       : wardens.filter(user => user.status === 'inactive');
+    usersToDisplay = filteredWardens.sort(sortWardensByName);
   } else { 
-    usersToDisplay = viewStatus === 'active' 
+    const filteredStudents = viewStatus === 'active' 
       ? students.filter(user => user.status === 'active')
       : students.filter(user => user.status === 'inactive');
+    usersToDisplay = filteredStudents.sort(sortStudentsByRollNo);
   }
 
   return (
@@ -126,10 +141,10 @@ function SuperuserUsersPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Name</th>
                 {viewRole === 'student' && <th>Roll No</th>}
+                <th>Name</th>
                 <th>Email</th>
-                {viewRole === 'warden' && <th>Status</th>}
+                <th>Status</th>
                 {viewRole === 'student' && <th>Hostel No</th>}
                 {viewRole === 'student' && <th>Room No</th>}
                 <th>Actions</th>
@@ -141,12 +156,11 @@ function SuperuserUsersPage() {
                   {viewRole === 'student' && <td>{user.rollNo || 'N/A'}</td>}
                   <td>{user.name}</td>
                   <td>{user.email}</td>
-                  {viewRole === 'warden' &&
                   <td>
-                    <span className={`status-badge status-${user.status.toLowerCase()}`}>
+                    <span className={`status-badge status-${user.status ? user.status.toLowerCase() : 'inactive'}`}>
                       {user.status}
                     </span>
-                  </td> }
+                  </td> 
                   {viewRole === 'student' && <td>{user.hostelNo || 'N/A'}</td>}
                   {viewRole === 'student' && <td>{user.roomNo || 'N/A'}</td>}
                   <td>
@@ -176,6 +190,7 @@ function SuperuserUsersPage() {
                         )}
                       </>
                     ) : (
+                      // Students are Read-Only for Superuser
                       <span>(Read-only)</span>
                     )}
                   </td>
@@ -192,7 +207,7 @@ function SuperuserUsersPage() {
         <AddUserModal 
           onClose={() => setIsAddModalOpen(false)}
           onUserAdded={fetchAllUsers} 
-          roleToCreate="warden"
+          roleToCreate="warden" 
         />
       )}
 

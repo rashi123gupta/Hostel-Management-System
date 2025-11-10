@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { addLeave } from '../services/leaveService';
 
-function RequestLeaveModal({ onClose }) {
-  const { currentUser } = useAuth();
+function RequestLeaveForm({ onClose, onLeaveAdded }) {
+  // const { currentUser } = useAuth(); // Not needed, service handles user
   const [formData, setFormData] = useState({ fromDate: '', toDate: '', reason: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,20 +13,19 @@ function RequestLeaveModal({ onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!currentUser) {
-      setError("You must be logged in to request leave.");
-      return;
-    }
     setLoading(true);
     setError('');
 
     try {
-      await addLeave(currentUser.uid, formData);
+      // We now pass the entire formData object, which is what
+      // the new addLeave service function expects.
+      await addLeave(formData); 
+      
       alert('Leave request submitted successfully!');
-      onClose();
+      onLeaveAdded(); // Call the success handler from the parent
     } catch (err) {
-      setError('Failed to submit leave request. Please try again.');
       console.error(err);
+      setError(err.message || 'Failed to submit leave request.');
     } finally {
       setLoading(false);
     }
@@ -39,7 +37,6 @@ function RequestLeaveModal({ onClose }) {
         <h3>Request New Leave</h3>
         {error && <p className="error-message">{error}</p>}
 
-        {/* The form structure is slightly changed for better styling */}
         <form onSubmit={handleSubmit}>
           <div className="modal-form-body">
             <div className="form-group">
@@ -95,4 +92,4 @@ function RequestLeaveModal({ onClose }) {
   );
 }
 
-export default RequestLeaveModal;
+export default RequestLeaveForm;

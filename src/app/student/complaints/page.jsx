@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import AddComplaintForm from '../../../components/AddComplaintForm';
-import { onStudentComplaintsChange } from '../../../services/complaintService';
+import React, { useState, useEffect } from 'react'; 
 import { useAuth } from '../../../context/AuthContext';
+import { onStudentComplaintsChange } from '../../../services/complaintService';
+import AddComplaintForm from '../../../components/AddComplaintForm';
+import '../../../styles/global.css';
 
 export default function StudentComplaintsPage() {
   const { currentUser } = useAuth();
@@ -10,21 +11,26 @@ export default function StudentComplaintsPage() {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // useEffect now sets up the real-time listener 
   useEffect(() => {
     if (!currentUser) {
       setLoading(false);
       return;
     }
-    
     setLoading(true);
+    setError(null); // Clear any previous errors
 
     // Call the listener function. It returns an 'unsubscribe' function.
     const unsubscribe = onStudentComplaintsChange(
-      currentUser.uid, 
+      currentUser.uid,
       (updatedComplaints) => {
-        // This callback runs every time the data changes
+        // This is the success callback
         setComplaints(updatedComplaints);
+        setLoading(false);
+      },
+      (err) => {
+        // This is the error callback
+        console.error(err);
+        setError('Failed to load complaints.');
         setLoading(false);
       }
     );
@@ -34,16 +40,20 @@ export default function StudentComplaintsPage() {
       unsubscribe();
     };
 
-  }, [currentUser]); // Re-run this effect if the user changes
+  }, [currentUser]); // Re-run if the user changes
 
-  // This function now only needs to close the modal 
   const handleComplaintAdded = () => {
+    // The listener will automatically update the list.
+    // We just need to close the modal.
     setIsModalOpen(false);
   };
   
   const formatDateForDisplay = (dateValue) => {
-    if (dateValue && typeof dateValue.toDate === 'function') {
-      return dateValue.toDate().toLocaleDateString('en-GB'); // DD/MM/YYYY
+    if (dateValue && typeof dateValue === 'object' && dateValue.toDate) {
+      return dateValue.toDate().toLocaleDateString('en-GB'); // Format as DD/MM/YYYY
+    }
+    if (typeof dateValue === 'string') {
+      return dateValue;
     }
     return 'N/A';
   };
@@ -53,7 +63,7 @@ export default function StudentComplaintsPage() {
     const lowerStatus = status.toLowerCase(); 
     switch (lowerStatus) {
       case 'resolved':
-        return 'status-approved'; 
+        return 'status-approved'; // Use 'status-approved' for green
       case 'pending':
       default:
         return 'status-pending';
@@ -63,7 +73,7 @@ export default function StudentComplaintsPage() {
   return (
     <div className="page-container">
       <div className="page-header">
-        <h1 className="page-title">My Complaints</h1>
+        <h1 className="page-title">Your Complaints</h1>
         <button onClick={() => setIsModalOpen(true)} className="btn-primary">
           Add Complaint
         </button>
@@ -108,7 +118,7 @@ export default function StudentComplaintsPage() {
       {isModalOpen && (
         <AddComplaintForm
           onClose={() => setIsModalOpen(false)}
-          onComplaintAdded={handleComplaintAdded}
+          onComplaintAdded={handleComplaintAdded} 
         />
       )}
     </div>

@@ -30,6 +30,7 @@ function Navbar() {
             <Link to="/student/dashboard">Dashboard</Link>
             <Link to="/student/leaves">Leaves</Link>
             <Link to="/student/complaints">Complaints</Link>
+            <Link to="/student/messfeedback">Mess Feedback</Link>
           </>
         );
       case 'warden':
@@ -39,6 +40,7 @@ function Navbar() {
             <Link to="/warden/users">Students</Link>
             <Link to="/warden/leaves">Leaves</Link>
             <Link to="/warden/complaints">Complaints</Link>
+            <Link to="/warden/messfeedback">Mess Feedback</Link>
           </>
         );
       case 'superuser':
