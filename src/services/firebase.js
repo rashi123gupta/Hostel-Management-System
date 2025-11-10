@@ -4,6 +4,8 @@ import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFirestore , connectFirestoreEmulator} from "firebase/firestore";
 import { getFunctions, httpsCallable, connectFunctionsEmulator } from "firebase/functions";
+import { getMessaging, isSupported } from "firebase/messaging";
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyA4xxnv2F1z--V5gVuML_hbijDaTYv0y5k",
@@ -24,10 +26,19 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
+// Messaging is optional on some browsers (like Safari)
+// So we create a promise that resolves only if supported
+export const messagingPromise = isSupported().then((supported) => {
+  return supported ? getMessaging(app) : null;
+});
+
+
 const functionRegion = 'us-central1'; 
 
 // Initialize functions with the app AND the region.
 export const functions = getFunctions(app, functionRegion);
+
+
 
 // // Emulator connection logic 
 // // This checks if the app is running in a browser on localhost

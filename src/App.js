@@ -1,6 +1,11 @@
+// src/App.js
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { messagingPromise } from "./services/firebase";
+import { onMessage } from "firebase/messaging";
+
 
 // Core Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -28,6 +33,9 @@ import SuperuserDashboard from './app/superuser/dashboard/page';
 import SuperuserUsersPage from './app/superuser/users/page.jsx';
 
 
+
+let onMessageListenerAdded = false;
+
 /**
  * A component that intelligently redirects logged-in users to their
  * correct dashboard from a neutral path like "/".
@@ -54,75 +62,86 @@ function DashboardRedirect() {
 }
 
 function App() {
+  React.useEffect(() => {
+  if (onMessageListenerAdded) return;   // ✅ prevents duplicate listeners
+  onMessageListenerAdded = true;
+
+  messagingPromise.then((messaging) => {
+    if (!messaging) return;
+
+    onMessage(messaging, (payload) => {
+      const n = payload?.notification;
+      if (n?.title) {
+        // ✅ optional: replace alert with a nicer toast
+        alert(`${n.title}\n${n.body || ""}`);
+      }
+    });
+  });
+}, []);
+
+
   return (
-    <AuthProvider>
-      <Router>
-        <Navbar />
-        <main className="main-content">
-          <Routes>
-            {/* --- Public Routes --- */}
-            <Route path="/login" element={<LoginPage />} />
+  <Router>
+    <Navbar />
+    <main className="main-content">
+      <Routes>
 
-            {/* --- Protected Student Routes --- */}
-            <Route 
-              path="/student/dashboard" 
-              element={<ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>} 
-            />
-            <Route 
-              path="/student/leaves" 
-              element={<ProtectedRoute role="student"><StudentLeavesPage /></ProtectedRoute>} 
-            />
-            <Route 
-              path="/student/complaints" 
-              element={<ProtectedRoute role="student"><StudentComplaintsPage /></ProtectedRoute>} 
-            />
+        <Route path="/login" element={<LoginPage />} />
 
-            {/* --- Protected Warden Routes --- */}
-            <Route 
-              path="/warden/dashboard" 
-              element={<ProtectedRoute role="warden"><AdminDashboard /></ProtectedRoute>} 
-            />
-            {/* --- MODIFICATION: Points to the WardenUsersPage --- */}
-            <Route 
-              path="/warden/users" 
-              element={<ProtectedRoute role="warden"><WardenUsersPage /></ProtectedRoute>} 
-            />
-            <Route 
-              path="/warden/leaves" 
-              element={<ProtectedRoute role="warden"><AdminLeaves /></ProtectedRoute>} 
-            />
-            <Route 
-              path="/warden/complaints" 
-              element={<ProtectedRoute role="warden"><AdminComplaints /></ProtectedRoute>} 
-            />
-            
-            {/* --- Protected Superuser Route --- */}
-            <Route 
-              path="/superuser/dashboard" 
-              element={<ProtectedRoute role="superuser"><SuperuserDashboard /></ProtectedRoute>} 
-            />
-            <Route 
-              path="/superuser/users" 
-              element={<ProtectedRoute role="superuser"><SuperuserUsersPage /></ProtectedRoute>} 
-            />
+        <Route 
+          path="/student/dashboard" 
+          element={<ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/student/leaves" 
+          element={<ProtectedRoute role="student"><StudentLeavesPage /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/student/complaints" 
+          element={<ProtectedRoute role="student"><StudentComplaintsPage /></ProtectedRoute>} 
+        />
 
-            {/* --- Redirect Logic --- */}
-            <Route 
-              path="/" 
-              element={<ProtectedRoute><DashboardRedirect /></ProtectedRoute>} 
-            />
-            
-            {/* --- 404 Not Found Fallback --- */}
-            <Route path="*" element={
-              <div style={{ textAlign: 'center', marginTop: '4rem' }}>
-                <h1>404 | Page Not Found</h1>
-              </div>
-            } />
-          </Routes>
-        </main>
-      </Router>
-    </AuthProvider>
-  );
+        <Route 
+          path="/warden/dashboard" 
+          element={<ProtectedRoute role="warden"><AdminDashboard /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/warden/users" 
+          element={<ProtectedRoute role="warden"><WardenUsersPage /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/warden/leaves" 
+          element={<ProtectedRoute role="warden"><AdminLeaves /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/warden/complaints" 
+          element={<ProtectedRoute role="warden"><AdminComplaints /></ProtectedRoute>} 
+        />
+
+        <Route 
+          path="/superuser/dashboard" 
+          element={<ProtectedRoute role="superuser"><SuperuserDashboard /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/superuser/users" 
+          element={<ProtectedRoute role="superuser"><SuperuserUsersPage /></ProtectedRoute>} 
+        />
+
+        <Route 
+          path="/" 
+          element={<ProtectedRoute><DashboardRedirect /></ProtectedRoute>} 
+        />
+
+        <Route path="*" element={
+          <div style={{ textAlign: 'center', marginTop: '4rem' }}>
+            <h1>404 | Page Not Found</h1>
+          </div>
+        } />
+
+      </Routes>
+    </main>
+  </Router>
+);
 }
 
 export default App;

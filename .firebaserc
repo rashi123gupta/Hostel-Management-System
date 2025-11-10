@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "hostel-management-system-fde00"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }
