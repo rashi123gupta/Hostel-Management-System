@@ -74,6 +74,7 @@ function App() {
       if (n?.title) {
         // ✅ optional: replace alert with a nicer toast
         alert(`${n.title}\n${n.body || ""}`);
+        console.log("📩 onMessage listener attached");
       }
     });
   });

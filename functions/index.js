@@ -3,7 +3,8 @@
 const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const cors = require("cors")({ origin: true });
+const cors = require("cors");
+const corsHandler = cors({ origin: true });
 const region = "asia-south1";
 admin.initializeApp();
 
@@ -151,98 +152,86 @@ async function sendToTokens(tokens, notification) {
 
 
 /**
- * A standard HTTP Cloud Function to create a new user.
- * NOW with logic for both Superusers and Wardens.
+ * A standard HTTP Cloud Function to create a new user and trigger a welcome email.
  */
 exports.createNewUser = functions.https.onRequest((req, res) => {
-  // 1. Handle CORS
-  cors(req, res, async () => {
+  // This runs cors *first* and then runs our async function
+  corsHandler(req, res, async () => {
     
-    // 2. Verify the user's ID token
-    if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) {
-      console.error("No authorization token found.");
-      res.status(403).send("Unauthorized");
-      return;
-    }
-
-    const idToken = req.headers.authorization.split('Bearer ')[1];
-    let decodedToken;
-
     try {
-      decodedToken = await admin.auth().verifyIdToken(idToken);
-    } catch (error) {
-      console.error("Failed to verify ID token:", error);
-      res.status(403).send("Unauthorized");
-      return;
-    }
+      // 2. Check for the auth token
+      if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) {
+        throw new functions.https.HttpsError("unauthenticated", "No authentication token was provided.");
+      }
+      const idToken = req.headers.authorization.split('Bearer ')[1];
+      
+      // 3. Verify the token
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      const callerUid = decodedToken.uid;
+      const callerDoc = await admin.firestore().collection('users').doc(callerUid).get();
+      
+      if (!callerDoc.exists) {
+        throw new functions.https.HttpsError("permission-denied", "Caller profile not found.");
+      }
+      const callerRole = callerDoc.data().role;
 
-    // 3. Get the CALLER'S role from Firestore
-    const callerUid = decodedToken.uid;
-    const callerDoc = await admin.firestore().collection('users').doc(callerUid).get();
+      // 4. Extract data (password is removed)
+      const { email, name, roleToCreate, rollNo, hostelNo, roomNo } = req.body.data;
 
-    if (!callerDoc.exists) {
-      res.status(403).send("Permission denied. Caller profile not found.");
-      return;
-    }
-    
-    const callerRole = callerDoc.data().role;
-    
-    // 4. Get the TARGET role from the request data
-    const { email, password, name, roleToCreate, hostelNo, roomNo, rollNo } = req.body.data;
+      // 5. Check permissions
+      let isAllowed = false;
+      if (callerRole === 'superuser' && roleToCreate === 'warden') { isAllowed = true; }
+      if (callerRole === 'warden' && roleToCreate === 'student') { isAllowed = true; }
+      
+      if (!isAllowed) {
+        throw new functions.https.HttpsError("permission-denied", `A ${callerRole} cannot create a ${roleToCreate}.`);
+      }
 
-    // 5. *** NEW PERMISSION LOGIC ***
-    let isAllowed = false;
-
-    // Case 1: A superuser is trying to create a warden
-    if (callerRole === 'superuser' && roleToCreate === 'warden') {
-      isAllowed = true;
-    }
-
-    // Case 2: A warden is trying to create a student
-    if (callerRole === 'warden' && roleToCreate === 'student') {
-      isAllowed = true;
-    }
-    
-    // 6. Check the final decision
-    if (!isAllowed) {
-      res.status(403).send(`Permission denied. A ${callerRole} cannot create a ${roleToCreate}.`);
-      return;
-    }
-
-    // 7. Logic is successful, proceed to create the user.
-    let newUserRecord;
-    try {
-      newUserRecord = await admin.auth().createUser({
+      // 6. Create Auth user (no password)
+      const userRecord = await admin.auth().createUser({
         email: email,
-        password: password,
+        emailVerified: false,
         displayName: name,
       });
-      
-      const userProfileData = {
-        name: name,
+
+      // 7. Create Firestore doc
+      await admin.firestore().collection('users').doc(userRecord.uid).set({
         email: email,
         role: roleToCreate,
+        name: name,
+        rollNo: rollNo || null,
+        hostelNo: hostelNo || null,
+        roomNo: roomNo || null,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        status: "active" // Default status for all new users is 'active'
-      };
+        status: "active",
+      });
+
+      // 8. Generate link and trigger email
+      const passwordResetLink = await admin.auth().generatePasswordResetLink(email);
       
-      if (roleToCreate === 'student') {
-        userProfileData.rollNo = rollNo;
-        userProfileData.hostelNo = hostelNo;
-        userProfileData.roomNo = roomNo;
-      }
+      await admin.firestore().collection("mail").add({
+        to: email,
+        template: {
+          name: "welcome", // The name of the template you will create
+          data: {
+            name: name,
+            action_url: passwordResetLink,
+            role: roleToCreate,
+          },
+        },
+      });
 
-      await admin.firestore().collection("users").doc(newUserRecord.uid).set(userProfileData);
-
-      // 8. Send a 200 OK response
-      res.status(200).send({ data: { success: true, uid: newUserRecord.uid } });
+      // 9. Send success response
+      res.status(200).send({ data: { success: true, uid: userRecord.uid } });
 
     } catch (error) {
-      if (newUserRecord) {
-        await admin.auth().deleteUser(newUserRecord.uid);
+      console.error("Error in createNewUser:", error);
+      const code = error.code || 'internal';
+      if (error.code === 'auth/email-already-exists') {
+        res.status(400).send({ error: { message: "This email address is already in use.", code: "auth/email-already-exists" } });
+      } else {
+        res.status(400).send({ error: { message: error.message, code: code } });
       }
-      console.error("Error in createNewUser function:", error);
-      res.status(500).send({ error: error.message });
     }
-  });
+  }); 
 });
