@@ -26,19 +26,28 @@ function AdminLeaves() {
         return map;
       }, {});
       
-      // *** THE FIX IS HERE ***
-      // We now correctly set the userMap to the state.
       setUsers(userMap); 
-      setLeaves(fetchedLeaves);
+
+      // --- MODIFICATION: Sort leaves by date (newest first) ---
+      const sortedLeaves = fetchedLeaves.sort((a, b) => {
+        // "Null-safe" check for the 'appliedAt' timestamp
+        const aDate = a.appliedAt ? a.appliedAt.toDate() : new Date(0);
+        const bDate = b.appliedAt ? b.appliedAt.toDate() : new Date(0);
+        return bDate - aDate; // Sort descending (b - a)
+      });
+      // --- END MODIFICATION ---
+
+      // Save the newly sorted list to state
+      setLeaves(sortedLeaves);
       
-      // Initialize local state for statuses and remarks from fetched data
-      const initialStatus = fetchedLeaves.reduce((acc, leave) => {
+      // Initialize local state for statuses and remarks from the sorted data
+      const initialStatus = sortedLeaves.reduce((acc, leave) => {
         acc[leave.id] = leave.status;
         return acc;
       }, {});
       setLeaveStatus(initialStatus);
 
-      const initialRemarks = fetchedLeaves.reduce((acc, leave) => {
+      const initialRemarks = sortedLeaves.reduce((acc, leave) => {
         acc[leave.id] = leave.adminRemarks || '';
         return acc;
       }, {});
@@ -57,6 +66,7 @@ function AdminLeaves() {
   }, [fetchLeavesAndUsers]);
 
   const handleStatusChange = async (leaveId, newStatus) => {
+// ... (existing code is correct) ...
     try {
       const remarksForLeave = remarks[leaveId] || '-';
       await updateLeaveStatus(leaveId, newStatus, remarksForLeave);
@@ -72,15 +82,18 @@ function AdminLeaves() {
   };
   
   const openModal = (leaveId) => {
+// ... (existing code is correct) ...
     setCurrentLeaveId(leaveId);
     setShowModal(true);
   };
 
   const handleRemarksChange = (e) => {
+// ... (existing code is correct) ...
     setRemarks(prev => ({ ...prev, [currentLeaveId]: e.target.value }));
   };
 
   const handleSaveRemarks = async () => {
+// ... (existing code is correct) ...
     if (!currentLeaveId) return;
     try {
       const status = leaveStatus[currentLeaveId];
@@ -107,6 +120,8 @@ function AdminLeaves() {
           <table className="data-table">
             <thead>
               <tr>
+                {/* --- MODIFICATION: Added Date column --- */}
+                <th>Applied On</th>
                 <th>Student Name</th>
                 <th>Roll No</th>
                 <th>From Date</th>
@@ -117,10 +132,20 @@ function AdminLeaves() {
               </tr>
             </thead>
             <tbody>
+              {/* This list is now pre-sorted by date */}
               {leaves.map(leave => {
                 const student = users[leave.studentId]; // Find the student from the map
+                // --- MODIFICATION: Added formatDate helper ---
+                const formatDate = (timestamp) => {
+                  if (timestamp && typeof timestamp.toDate === 'function') {
+                    return timestamp.toDate().toLocaleDateString('en-GB');
+                  }
+                  return 'N/A';
+                };
                 return (
                   <tr key={leave.id}>
+                    {/* --- MODIFICATION: Added Date cell --- */}
+                    <td>{formatDate(leave.appliedAt)}</td>
                     <td>{student?.name || 'N/A'}</td>
                     <td>{student?.rollNo || 'N/A'}</td>
                     <td>{leave.fromDate}</td>
@@ -159,6 +184,7 @@ function AdminLeaves() {
 
       {showModal && (
         <div className="modal">
+{/* ... (existing code is correct) ... */}
           <div className="modal-content">
             <h3>Edit Remarks</h3>
             <textarea
@@ -180,4 +206,3 @@ function AdminLeaves() {
 }
 
 export default AdminLeaves;
-

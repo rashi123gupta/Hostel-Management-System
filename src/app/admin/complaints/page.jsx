@@ -3,15 +3,10 @@ import { getAllComplaints, updateComplaintStatus } from '../../../services/compl
 import { getAllUsers } from '../../../services/userService';
 
 function AdminComplaints() {
-  // State for the raw data fetched from Firestore
   const [complaints, setComplaints] = useState([]);
   const [users, setUsers] = useState({});
-  
-  // Local state to manage UI changes before saving
   const [complaintStatus, setComplaintStatus] = useState({});
-  const [remarks, setRemarks] = useState({});
-
-  // State for modal and loading/error handling
+  const [remarks, setRemarks] = useState({}); // Renamed from resolutionDetails for consistency
   const [showModal, setShowModal] = useState(false);
   const [currentComplaintId, setCurrentComplaintId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -22,7 +17,7 @@ function AdminComplaints() {
     try {
       const [fetchedComplaints, fetchedUsers] = await Promise.all([
         getAllComplaints(),
-        getAllUsers(),
+        getAllUsers()
       ]);
 
       const userMap = fetchedUsers.reduce((map, user) => {
@@ -30,12 +25,19 @@ function AdminComplaints() {
         return map;
       }, {});
       
-      setComplaints(fetchedComplaints);
       setUsers(userMap);
       
-      // Initialize local state from the fetched data
-      const initialStatus = fetchedComplaints.reduce((acc, c) => ({ ...acc, [c.id]: c.status }), {});
-      const initialRemarks = fetchedComplaints.reduce((acc, c) => ({ ...acc, [c.id]: c.resolutionDetails || '' }), {});
+      // --- MODIFICATION: Sort by date (newest first) ---
+      const sortedComplaints = fetchedComplaints.sort((a, b) => {
+        const aDate = a.createdAt ? a.createdAt.toDate() : new Date(0);
+        const bDate = b.createdAt ? b.createdAt.toDate() : new Date(0);
+        return bDate - aDate;
+      });
+      setComplaints(sortedComplaints);
+      // --- END MODIFICATION ---
+      
+      const initialStatus = sortedComplaints.reduce((acc, c) => ({ ...acc, [c.id]: c.status }), {});
+      const initialRemarks = sortedComplaints.reduce((acc, c) => ({ ...acc, [c.id]: c.resolutionDetails || '' }), {});
       
       setComplaintStatus(initialStatus);
       setRemarks(initialRemarks);
@@ -48,19 +50,18 @@ function AdminComplaints() {
     }
   }, []);
 
+
   useEffect(() => {
     fetchComplaintsData();
   }, [fetchComplaintsData]);
 
   const handleStatusChange = async (complaintId, newStatus) => {
-    // Immediately update the local state for a responsive UI
+// ... (existing code is correct) ...
     setComplaintStatus(prev => ({ ...prev, [complaintId]: newStatus }));
     try {
-      // Send the update to Firebase with the new status and existing remarks
       await updateComplaintStatus(complaintId, newStatus, remarks[complaintId] || '-');
       alert('Status updated successfully!');
     } catch (err) {
-      // If the update fails, revert the local state
       setComplaintStatus(prev => ({ ...prev, [complaintId]: complaints.find(c => c.id === complaintId).status }));
       console.error("Error updating complaint status:", err);
       setError('Failed to update status.');
@@ -68,17 +69,18 @@ function AdminComplaints() {
   };
 
   const openModal = (complaintId) => {
+// ... (existing code is correct) ...
     setCurrentComplaintId(complaintId);
     setShowModal(true);
   };
 
-  // This function is only for the text area inside the modal
   const handleRemarksChange = (e) => {
+// ... (existing code is correct) ...
     setRemarks(prev => ({ ...prev, [currentComplaintId]: e.target.value }));
   };
 
-  // This function saves the remarks from the modal
   const handleSaveRemarks = async () => {
+// ... (existing code is correct) ...
     if (!currentComplaintId) return;
     
     try {
@@ -95,6 +97,15 @@ function AdminComplaints() {
     }
   };
 
+  // --- MODIFICATION: Added formatDate helper function ---
+  const formatDate = (timestamp) => {
+    if (timestamp && typeof timestamp.toDate === 'function') {
+      return timestamp.toDate().toLocaleDateString('en-GB'); // DD/MM/YYYY
+    }
+    return 'N/A';
+  };
+  // --- END MODIFICATION ---
+
   if (loading) return <div className="loading">Loading complaints...</div>;
   if (error) return <div className="error-message">{error}</div>;
 
@@ -108,6 +119,8 @@ function AdminComplaints() {
           <table className="data-table">
             <thead>
               <tr>
+                {/* --- MODIFICATION: Added Date column --- */}
+                <th>Date</th>
                 <th>Student Name</th>
                 <th>Roll No</th>
                 <th>Description</th>
@@ -124,13 +137,15 @@ function AdminComplaints() {
 
                 return (
                   <tr key={complaint.id}>
+                    {/* --- MODIFICATION: Added Date cell --- */}
+                    <td>{formatDate(complaint.createdAt)}</td>
                     <td>{student?.name || 'N/A'}</td>
                     <td>{student?.rollNo || 'N/A'}</td>
                     <td>{complaint.description}</td>
                     <td>
                       <select
                         value={complaintStatus[complaint.id] || complaint.status}
-                        onChange={(e) => handleStatusChange(complaint.id, e.target.value)}
+                        onChange={(e) => handleStatusChange(complaint.id, e.g.value)}
                         className={`status-select status-${(complaintStatus[complaint.id] || complaint.status).toLowerCase()}`}
                       >
                         <option value="Pending">Pending</option>
@@ -175,4 +190,3 @@ function AdminComplaints() {
 }
 
 export default AdminComplaints;
-
