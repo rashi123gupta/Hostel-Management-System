@@ -2,8 +2,6 @@ import { db, functions, auth } from './firebase';
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 
-const CREATE_USER_URL = "https://us-central1-hostel-management-system-fde00.cloudfunctions.net/createNewUser";
-
 /**
  * Calls our HTTP Cloud Function to create a new user using fetch.
  * @param {object} userData - Data for the new user (email, password, name, etc.)

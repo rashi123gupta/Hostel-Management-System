@@ -10,7 +10,7 @@ import '../styles/global.css'; // Ensure styles are imported
  * @param {function} props.onUserUpdated - Function to refresh the user list.
  * @param {object} props.userToEdit - The user object to be edited.
  */
-function AdminEditUserModal({ onClose, onUserUpdated, userToEdit }) {
+function EditUserModal({ onClose, onUserUpdated, userToEdit }) {
   const [formData, setFormData] = useState({ name: '', rollNo: '', hostelNo: '', roomNo: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -113,4 +113,4 @@ function AdminEditUserModal({ onClose, onUserUpdated, userToEdit }) {
   );
 }
 
-export default AdminEditUserModal;
+export default EditUserModal;

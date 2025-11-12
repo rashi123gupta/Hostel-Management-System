@@ -1,57 +1,59 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { logOut } from '../services/authService';
+// src/components/Navbar.jsx
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function Navbar() {
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser, userProfile, safeSignOut } = useAuth(); // ✅ use safeSignOut
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
-      await logOut();
-      navigate('/login');
+      await safeSignOut(); // ✅ clean unsubscribe before signOut
+      navigate("/login", { replace: true });
     } catch (error) {
-      console.error('Failed to log out', error);
+      console.error("Failed to log out:", error);
+      alert("Logout failed. Please try again.");
     }
   };
 
   const renderLinks = () => {
-    if (!currentUser) {
-      // No user, show login (Signup is removed)
-      return null;
-    }
+    if (!currentUser || !userProfile) return null;
 
-    // Use userProfile.role to determine links
-    switch (userProfile?.role) {
-      case 'student':
+    switch (userProfile.role) {
+      case "student":
         return (
           <>
             <Link to="/student/dashboard">Dashboard</Link>
             <Link to="/student/leaves">Leaves</Link>
             <Link to="/student/complaints">Complaints</Link>
+            <Link to="/student/messmenu">Mess Menu</Link>
             <Link to="/student/messfeedback">Mess Feedback</Link>
           </>
         );
-      case 'warden':
+
+      case "warden":
         return (
           <>
             <Link to="/warden/dashboard">Dashboard</Link>
             <Link to="/warden/users">Students</Link>
             <Link to="/warden/leaves">Leaves</Link>
             <Link to="/warden/complaints">Complaints</Link>
+            <Link to="/warden/messmenu">Mess Menu</Link>
+            <Link to="/warden/messsuggestions">Menu Suggestions</Link>
             <Link to="/warden/messfeedback">Mess Feedback</Link>
           </>
         );
-      case 'superuser':
+
+      case "superuser":
         return (
           <>
             <Link to="/superuser/dashboard">Dashboard</Link>
             <Link to="/superuser/users">Manage Users</Link>
           </>
         );
+
       default:
-        // Loading or no profile, show nothing yet
         return null;
     }
   };
@@ -62,7 +64,9 @@ function Navbar() {
       <div className="navbar-links">
         {renderLinks()}
         {currentUser && (
-          <button onClick={handleLogout} className="btn-logout">Logout</button>
+          <button onClick={handleLogout} className="btn-logout">
+            Logout
+          </button>
         )}
       </div>
     </nav>

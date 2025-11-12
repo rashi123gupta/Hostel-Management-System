@@ -1,31 +1,84 @@
 // src/components/ProtectedRoute.jsx
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React, { useEffect } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-// This component is now more robust and handles the loading state.
-export default function ProtectedRoute({ children, adminOnly = false }) {
+const getDashboardPathByRole = (role) => {
+  switch (role) {
+    case "superuser":
+      return "/superuser/dashboard";
+    case "warden":
+      return "/warden/dashboard";
+    case "student":
+      return "/student/dashboard";
+    default:
+      return "/login";
+  }
+};
+
+export default function ProtectedRoute({ children, role }) {
   const { currentUser, userProfile, loading } = useAuth();
+  const location = useLocation();
 
-  // 1. Wait until the authentication state is fully loaded
+  // 🔹 Show alert when userProfile is loaded and role mismatch is detected
+  useEffect(() => {
+    if (
+      !loading &&
+      currentUser &&
+      userProfile?.role &&
+      role &&
+      userProfile.role !== role
+    ) {
+      alert("Unauthorized Access! Redirecting to your dashboard.");
+    }
+  }, [loading, currentUser, userProfile, role]);
+
+  // 1️⃣ While checking authentication → loading screen
   if (loading) {
-    // While loading, you can show a loading spinner or just a blank page briefly.
-    // Returning null is safe and prevents rendering children prematurely.
-    return <div>Loading session...</div>;
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "1.2rem",
+          color: "#333",
+        }}
+      >
+        Checking access...
+      </div>
+    );
   }
 
-  // 2. If loading is finished and there's no user, redirect to login
+  // 2️⃣ Not logged in → redirect to login
   if (!currentUser) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // 3. If it's an admin-only route, check the user's role
-  if (adminOnly && userProfile?.role !== 'admin') {
-    // If a non-admin tries to access, redirect them to their dashboard
-    return <Navigate to="/student/dashboard" />;
+  // 3️⃣ Profile not yet loaded → wait
+  if (!userProfile || !userProfile.role) {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "1.1rem",
+        }}
+      >
+        Loading user profile...
+      </div>
+    );
   }
 
-  // 4. If all checks pass, render the component
+  // 4️⃣ Role mismatch → redirect after alert triggered above
+  if (role && userProfile.role !== role) {
+    const redirectPath = getDashboardPathByRole(userProfile.role);
+    return <Navigate to={redirectPath} replace />;
+  }
+
+  // 5️⃣ Authorized → render child
   return children;
 }
-

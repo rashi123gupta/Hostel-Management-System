@@ -37,20 +37,3 @@ const functionRegion = 'us-central1';
 
 // Initialize functions with the app AND the region.
 export const functions = getFunctions(app, functionRegion);
-
-
-
-// // Emulator connection logic 
-// // This checks if the app is running in a browser on localhost
-// if (window.location.hostname === "localhost") {
-//   console.log("Connecting to local Firebase emulators...");
-
-//   // Connect to the Auth emulator
-//   connectAuthEmulator(auth, "http://localhost:9099");
-
-//   // Connect to the Firestore emulator
-//   connectFirestoreEmulator(db, "localhost", 8080);
-
-//   // Connect to the Functions emulator
-//   connectFunctionsEmulator(functions, "localhost", 5001);
-// }
