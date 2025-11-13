@@ -111,8 +111,7 @@ export default function AddSuggestionModal({ onClose }) {
         <div className="modal-actions">
           {step > 1 && (
             <button
-              className="btn-close-modal" // Using a standard button style
-              style={{ flexGrow: 0.5, backgroundColor: '#7f8c8d' }} // Inline style for gray
+              className="btn-prev-modal"
               onClick={() => setStep(step - 1)}
               disabled={loading}
             >
@@ -121,8 +120,7 @@ export default function AddSuggestionModal({ onClose }) {
           )}
           {step < 4 && (
             <button
-              className="btn-primary" // Using a standard button style
-              style={{ flexGrow: 0.5 }}
+              className="btn-next-modal"
               onClick={() => setStep(step + 1)}
               disabled={loading}
             >

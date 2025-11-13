@@ -141,7 +141,7 @@ body {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #3498db;
+  background-color: #3784b8;
 }
 
 /* --- 5. Page Layouts & Cards --- */
@@ -371,6 +371,38 @@ body {
   margin-top: 2rem; /* Increased margin for more space */
   padding-top: 1.5rem;
   border-top: 1px solid #e2e8f0; /* Visual separator line */
+}
+
+.btn-prev-modal {
+  padding: 0.8rem;
+  border: none;
+  background-color: #f39c12; /* Red color */
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+  font-size: 1rem;
+  flex-grow: 1; /* Make buttons grow to fill space */
+}
+.btn-prev-modal:hover {
+  background-color: #dd9726; /* Darker red on hover */
+}
+
+.btn-next-modal {
+  padding: 0.8rem;
+  border: none;
+  background-color: #3498db; /* Red color */
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+  font-size: 1rem;
+  flex-grow: 1; /* Make buttons grow to fill space */
+}
+.btn-next-modal:hover {
+  background-color: #3784b8; /* Darker red on hover */
 }
 
 .btn-close-modal {

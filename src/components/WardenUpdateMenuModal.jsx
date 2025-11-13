@@ -1,9 +1,14 @@
+// src/components/WardenUpdateMenuModal.jsx
+
 import React, { useState } from "react";
 import { db } from "../services/firebase";
 import { updateDoc, doc, serverTimestamp } from "firebase/firestore";
 
 export default function WardenUpdateMenuModal({ menu, onClose }) {
-  const [step, setStep] = useState(0); // 0: breakfast, 1: lunch, etc.
+  const [step, setStep] = useState(0); 
+
+  const [mealStep, setMealStep] = useState(0); // 0: breakfast, 1: lunch...
+
   const [formData, setFormData] = useState({
     breakfast: "",
     lunch: "",
@@ -11,17 +16,21 @@ export default function WardenUpdateMenuModal({ menu, onClose }) {
     dinner: "",
     dayId: "",
   });
+
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
+  const stepNames = ["Breakfast", "Lunch", "Snacks", "Dinner"];
+  const stepKeys = ["breakfast", "lunch", "snacks", "dinner"];
+
+  const handleFieldChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
   };
 
-  const handleNext = () => setStep((prev) => Math.min(prev + 1, 3));
-  const handlePrev = () => setStep((prev) => Math.max(prev - 1, 0));
+  const nextStep = () => setStep((prev) => prev + 1);
+  const prevStep = () => setStep((prev) => prev - 1);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,40 +38,39 @@ export default function WardenUpdateMenuModal({ menu, onClose }) {
 
     try {
       if (!formData.dayId) {
-        alert("Please select a day to update.");
+        alert("Please select a day first.");
         setLoading(false);
         return;
       }
 
       const docRef = doc(db, "messMenu", formData.dayId);
 
-      // Only update filled fields
-      const updatedFields = {};
-      ["breakfast", "lunch", "snacks", "dinner"].forEach((key) => {
-        if (formData[key].trim()) updatedFields[key] = formData[key];
+      const updated = {};
+      stepKeys.forEach((key) => {
+        if (formData[key].trim()) updated[key] = formData[key];
       });
 
-      updatedFields.updatedAt = serverTimestamp();
+      updated.updatedAt = serverTimestamp();
 
-      await updateDoc(docRef, updatedFields);
+      await updateDoc(docRef, updated);
 
       alert("Menu updated successfully!");
       onClose();
-    } catch (err) {
-      console.error("Error updating menu:", err);
+    } catch (error) {
+      console.error(error);
       alert("Failed to update menu.");
     }
 
     setLoading(false);
   };
 
-  const stepNames = ["Breakfast", "Lunch", "Snacks", "Dinner"];
-
   return (
     <div className="modal">
       <div className="modal-content">
         <h3>Update Mess Menu</h3>
+
         <form className="modal-form-body" onSubmit={handleSubmit}>
+          {/* STEP 0 — Select Day */}
           {step === 0 && (
             <>
               <label>Select Day:</label>
@@ -70,59 +78,79 @@ export default function WardenUpdateMenuModal({ menu, onClose }) {
                 name="dayId"
                 className="form-input"
                 value={formData.dayId}
-                onChange={handleChange}
+                onChange={handleFieldChange}
                 required
               >
-                <option value="">Select a Day</option>
+                <option value="">Choose a Day</option>
                 {menu.map((day) => (
                   <option key={day.id} value={day.id}>
                     {day.dayName}
                   </option>
                 ))}
               </select>
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="btn-next-modal"
+                  onClick={() => {
+                    if (!formData.dayId) {
+                      alert("Please select a day first.");
+                      return;
+                    }
+                    nextStep(); // go to meal selection
+                  }}
+                >
+                  Next
+                </button>
+
+                <button type="button" className="btn-close-modal" onClick={onClose}>
+                  Close
+                </button>
+              </div>
             </>
           )}
 
-          <label>{stepNames[step]}:</label>
-          <textarea
-            name={["breakfast", "lunch", "snacks", "dinner"][step]}
-            className="form-input"
-            placeholder={`Enter New ${stepNames[step]} (leave blank if no updates)`}
-            value={formData[["breakfast", "lunch", "snacks", "dinner"][step]]}
-            onChange={handleChange}
-          />
-
-          <div className="modal-actions">
-            {step > 0 && (
-              <button
-                type="button"
-                className="btn-prev-modal"
-                onClick={handlePrev}
+          {/* STEP 1 — Choose Meal to Edit */}
+          {step === 1 && (
+            <>
+              <label>Select Meal to Update:</label>
+              <select
+                className="form-input"
+                value={mealStep}
+                onChange={(e) => setMealStep(Number(e.target.value))}
               >
-                Previous
-              </button>
-            )}
+                {stepNames.map((name, index) => (
+                  <option key={index} value={index}>
+                    {name}
+                  </option>
+                ))}
+              </select>
 
-            {step < 3 && (
-              <button
-                type="button"
-                className="btn-next-modal"
-                onClick={handleNext}
-              >
-                Next
-              </button>
-            )}
+              <label style={{ marginTop: "1rem" }}>{stepNames[mealStep]}:</label>
+              <textarea
+                name={stepKeys[mealStep]}
+                className="form-input"
+                placeholder={`Enter New ${stepNames[mealStep]}`}
+                value={formData[stepKeys[mealStep]]}
+                onChange={handleFieldChange}
+              />
 
-            {step === 3 && (
-              <button type="submit" className="btn-primary" disabled={loading}>
-                {loading ? "Updating..." : "Submit"}
-              </button>
-            )}
+              <div className="modal-actions">
+                <button type="button" className="btn-prev-modal" onClick={prevStep}>
+                  Previous
+                </button>
 
-            <button type="button" className="btn-close-modal" onClick={onClose}>
-              Close
-            </button>
-          </div>
+                <button type="submit" className="btn-primary">
+                  Submit
+                </button>
+
+                <button type="button" className="btn-close-modal" onClick={onClose}>
+                  Close
+                </button>
+              </div>
+            </>
+          )}
         </form>
       </div>
     </div>

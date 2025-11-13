@@ -19,6 +19,7 @@ import LoginPage from './app/login/page';
 import StudentDashboard from './app/student/dashboard/page';
 import StudentLeavesPage from './app/student/leaves/page';
 import StudentComplaintsPage from './app/student/complaints/page';
+import StudentMessMenu from './app/student/messmenu/page.jsx';
 import MessFeedbackPage from './app/student/messfeedback/page';
 
 // Admin/Warden Page Components
