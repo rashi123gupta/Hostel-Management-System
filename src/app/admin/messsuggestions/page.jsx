@@ -16,7 +16,6 @@ function toDateSafe(ts) {
       return ts.toDate();
     } catch {}
   }
-// ... (existing code is correct) ...
   if (typeof ts === "number") return new Date(ts);
   if (typeof ts === "string") {
     const parsed = Date.parse(ts.replace(" at ", " ").replace(" UTC", ""));

@@ -13,19 +13,24 @@ export default function WardenMessMenu() {
   const [menu, setMenu] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  // --- MODIFICATION: Added error state ---
+  const [selectedDay, setSelectedDay] = useState("all");
   const [error, setError] = useState(null);
 
   const formatDateForDisplay = (dateValue) => {
-    if (dateValue && typeof dateValue === 'object' && dateValue.toDate) {
-      return dateValue.toDate().toLocaleDateString('en-GB'); // Format as DD/MM/YYYY
+    if (dateValue && typeof dateValue === "object" && dateValue.toDate) {
+      return dateValue.toDate().toLocaleDateString("en-GB"); // Format as DD/MM/YYYY
     }
-// ... (existing code is correct) ...
-    if (typeof dateValue === 'string') {
+    // ... (existing code is correct) ...
+    if (typeof dateValue === "string") {
       return dateValue;
     }
-    return 'N/A';
+    return "N/A";
   };
+  
+  const filteredMenu = selectedDay === "all"
+  ? menu
+  : menu.filter((item) => item.dayName === selectedDay);
+
 
   // --- MODIFICATION: useEffect now uses the service function ---
   useEffect(() => {
@@ -62,10 +67,30 @@ export default function WardenMessMenu() {
   return (
     <div className="page-container">
       <div className="page-header">
+
         <h1>Weekly Mess Menu</h1>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+        <select
+          className="status-filter-select"
+          value={selectedDay}
+          onChange={(e) => setSelectedDay(e.target.value)}
+          style={{ width: "160px" }}
+        >
+          <option value="all">All Days</option>
+          <option value="Monday">Monday</option>
+          <option value="Tuesday">Tuesday</option>
+          <option value="Wednesday">Wednesday</option>
+          <option value="Thursday">Thursday</option>
+          <option value="Friday">Friday</option>
+          <option value="Saturday">Saturday</option>
+          <option value="Sunday">Sunday</option>
+        </select>
+
         <button className="btn-primary" onClick={() => setShowModal(true)}>
           Update Mess Menu
         </button>
+        </div>
       </div>
 
       {/* --- MODIFICATION: Show error if one occurs --- */}
@@ -73,15 +98,23 @@ export default function WardenMessMenu() {
 
       {!error && (
         <div className="card-list">
-          {menu.map((item) => (
+          {filteredMenu.map((item) => (
             <div className="card" key={item.id}>
               <h3>{item.dayName}</h3>
-              <p><strong>Breakfast:</strong> {item.breakfast}</p>
-              <p><strong>Lunch:</strong> {item.lunch}</p>
-              <p><strong>Snacks:</strong> {item.snacks}</p>
-              <p><strong>Dinner:</strong> {item.dinner}</p>
+              <p>
+                <strong>Breakfast:</strong> {item.breakfast}
+              </p>
+              <p>
+                <strong>Lunch:</strong> {item.lunch}
+              </p>
+              <p>
+                <strong>Snacks:</strong> {item.snacks}
+              </p>
+              <p>
+                <strong>Dinner:</strong> {item.dinner}
+              </p>
               <p className="updated-at">
-                Updated At:{" "}{formatDateForDisplay(item.updatedAt)}
+                Updated At: {formatDateForDisplay(item.updatedAt)}
               </p>
             </div>
           ))}

@@ -511,10 +511,10 @@ body {
   color: #4a5568;
 }
 .status-filter-select {
-  padding: 0.5rem;
-  border-radius: 5px;
+  padding: 0.6rem;
+  border-radius: 7px;
   border: 1px solid #ccc;
-  font-size: 0.9rem;
+  font-size: 1rem;
   cursor: pointer;
   background-color: #fff;
 }
