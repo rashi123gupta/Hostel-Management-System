@@ -1,8 +1,9 @@
-// src/components/AddSuggestionModal.jsx
-
 import React, { useState } from "react";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { db } from "../services/firebase";
+// --- MODIFICATION: Remove direct Firebase imports ---
+// import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+// import { db } from "../services/firebase";
+// --- MODIFICATION: Import the new service function ---
+import { addMessSuggestion } from "../services/messMenuService";
 import { useAuth } from "../context/AuthContext";
 
 export default function AddSuggestionModal({ onClose }) {
@@ -15,37 +16,29 @@ export default function AddSuggestionModal({ onClose }) {
     snacks: "",
     dinner: "",
   });
+  // --- MODIFICATION: Added loading and error state ---
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // --- MODIFICATION: handleSubmit is now async and uses the service ---
   const handleSubmit = async () => {
+    setLoading(true);
+    setError("");
     try {
-      // await addDoc(collection(db, "messSuggestions"), {
-      //   ...formData,
-      //   studentId: userProfile?.uid || "",
-      //   studentName: userProfile?.name || "Anonymous",
-      //   rollNo: userProfile?.rollNo || "",
-      //   status: "Pending",
-      //   submittedAt: serverTimestamp(),
-      // });
-      const docRef = await addDoc(collection(db, "messSuggestions"), {
-        ...formData,
-        studentId: userProfile?.uid || "",
-        studentName: userProfile?.name || "Anonymous",
-        rollNo: userProfile?.rollNo || "",
-        status: "Pending",
-        submittedAt: serverTimestamp(),
-      });
-      // Force Firestore to update local cache after timestamp resolves
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
+      // The service function now handles all the logic
+      await addMessSuggestion(formData, userProfile);
+      
       alert("Suggestion submitted successfully!");
       onClose();
     } catch (err) {
       console.error("Error submitting suggestion:", err);
-      alert("Failed to submit suggestion. Check console for details.");
+      setError(err.message || "Failed to submit suggestion.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,13 +46,17 @@ export default function AddSuggestionModal({ onClose }) {
     <div className="modal">
       <div className="modal-content">
         <h3>Add Mess Menu Suggestion</h3>
+        {/* --- MODIFICATION: Show error message --- */}
+        {error && <p className="error-message">{error}</p>}
 
         <div className="modal-form-body">
           {step === 1 && (
             <>
-              <label>Breakfast Suggestion</label>
+              {/* --- MODIFICATION: Use proper label 'for' and 'id' --- */}
+              <label htmlFor="breakfast">Breakfast Suggestion</label>
               <textarea
                 className="form-input"
+                id="breakfast"
                 name="breakfast"
                 value={formData.breakfast}
                 onChange={handleChange}
@@ -70,9 +67,10 @@ export default function AddSuggestionModal({ onClose }) {
 
           {step === 2 && (
             <>
-              <label>Lunch Suggestion</label>
+              <label htmlFor="lunch">Lunch Suggestion</label>
               <textarea
                 className="form-input"
+                id="lunch"
                 name="lunch"
                 value={formData.lunch}
                 onChange={handleChange}
@@ -83,9 +81,10 @@ export default function AddSuggestionModal({ onClose }) {
 
           {step === 3 && (
             <>
-              <label>Snacks Suggestion</label>
+              <label htmlFor="snacks">Snacks Suggestion</label>
               <textarea
                 className="form-input"
+                id="snacks"
                 name="snacks"
                 value={formData.snacks}
                 onChange={handleChange}
@@ -96,9 +95,10 @@ export default function AddSuggestionModal({ onClose }) {
 
           {step === 4 && (
             <>
-              <label>Dinner Suggestion</label>
+              <label htmlFor="dinner">Dinner Suggestion</label>
               <textarea
                 className="form-input"
+                id="dinner"
                 name="dinner"
                 value={formData.dinner}
                 onChange={handleChange}
@@ -111,26 +111,39 @@ export default function AddSuggestionModal({ onClose }) {
         <div className="modal-actions">
           {step > 1 && (
             <button
-              className="btn-prev-modal"
+              className="btn-close-modal" // Using a standard button style
+              style={{ flexGrow: 0.5, backgroundColor: '#7f8c8d' }} // Inline style for gray
               onClick={() => setStep(step - 1)}
+              disabled={loading}
             >
               Previous
             </button>
           )}
           {step < 4 && (
             <button
-              className="btn-next-modal"
+              className="btn-primary" // Using a standard button style
+              style={{ flexGrow: 0.5 }}
               onClick={() => setStep(step + 1)}
+              disabled={loading}
             >
               Next
             </button>
           )}
           {step === 4 && (
-            <button className="btn-primary" onClick={handleSubmit}>
-              Submit
+            // --- MODIFICATION: Added loading state ---
+            <button 
+              className="btn-primary" 
+              onClick={handleSubmit} 
+              disabled={loading}
+            >
+              {loading ? "Submitting..." : "Submit"}
             </button>
           )}
-          <button className="btn-close-modal" onClick={onClose}>
+          <button 
+            className="btn-close-modal" 
+            onClick={onClose} 
+            disabled={loading}
+          >
             Cancel
           </button>
         </div>
