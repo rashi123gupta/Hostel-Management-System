@@ -19,6 +19,7 @@ import LoginPage from './app/login/page';
 import StudentDashboard from './app/student/dashboard/page';
 import StudentLeavesPage from './app/student/leaves/page';
 import StudentComplaintsPage from './app/student/complaints/page';
+import StudentMessMenu from './app/student/messmenu/page.jsx';
 import MessFeedbackPage from './app/student/messfeedback/page';
 
 // Admin/Warden Page Components
@@ -63,7 +64,7 @@ function DashboardRedirect() {
 
 function App() {
   React.useEffect(() => {
-  if (onMessageListenerAdded) return;   // ✅ prevents duplicate listeners
+  if (onMessageListenerAdded) return;
   onMessageListenerAdded = true;
 
   messagingPromise.then((messaging) => {
@@ -72,7 +73,6 @@ function App() {
     onMessage(messaging, (payload) => {
       const n = payload?.notification;
       if (n?.title) {
-        // ✅ optional: replace alert with a nicer toast
         alert(`${n.title}\n${n.body || ""}`);
         console.log("📩 onMessage listener attached");
       }
@@ -101,6 +101,10 @@ function App() {
         <Route 
           path="/student/complaints" 
           element={<ProtectedRoute role="student"><StudentComplaintsPage /></ProtectedRoute>} 
+        />
+        <Route 
+              path="/student/messmenu" 
+              element={<ProtectedRoute role="student"><StudentMessMenu /></ProtectedRoute>} 
         />
         <Route 
               path="/student/messfeedback" 
