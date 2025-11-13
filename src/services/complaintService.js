@@ -1,5 +1,15 @@
-import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, doc, onSnapshot,orderBy } 
-from 'firebase/firestore'; 
+import { 
+  collection, 
+  addDoc, 
+  serverTimestamp, 
+  query, 
+  where, 
+  getDocs, 
+  updateDoc, 
+  doc, 
+  onSnapshot,
+  orderBy
+} from 'firebase/firestore'; 
 import { db, auth } from './firebase';
 
 /**
@@ -21,7 +31,7 @@ export const addComplaint = async (description) => {
 };
 
 /**
- * Fetches all complaints for a specific student one time.
+ * [DEPRECATED] Fetches all complaints for a specific student one time.
  */
 export const getStudentComplaints = async (studentId) => {
   if (!studentId) {
@@ -33,13 +43,8 @@ export const getStudentComplaints = async (studentId) => {
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
-// --- NEW/UPDATED REAL-TIME LISTENER FUNCTION ---
 /**
  * Sets up a real-time listener for a student's complaints, sorted by date.
- * @param {string} studentId - The UID of the student.
- * @param {function} callback - The function to call with the updated complaints list.
- * @param {function} onError - The function to call if an error occurs.
- * @returns {function} - The unsubscribe function for the listener.
  */
 export const onStudentComplaintsChange = (studentId, callback, onError) => {
   if (!studentId) {
@@ -47,7 +52,6 @@ export const onStudentComplaintsChange = (studentId, callback, onError) => {
     return () => {}; // Return an empty unsubscribe function
   }
 
-  // Added orderBy('createdAt', 'desc') 
   const q = query(
     collection(db, 'complaints'), 
     where('studentId', '==', studentId),
@@ -79,12 +83,50 @@ export const onStudentComplaintsChange = (studentId, callback, onError) => {
 };
 
 /**
- * Fetches all complaints from all students (for admin).
+ * [DEPRECATED] Fetches all complaints from all students (for admin).
  */
 export const getAllComplaints = async () => {
   const querySnapshot = await getDocs(collection(db, 'complaints'));
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
+
+// --- NEW REAL-TIME LISTENER FOR WARDEN ---
+/**
+ * Sets up a real-time listener for ALL complaints, for the warden's page.
+ * @param {function} callback - The function to call with the updated list.
+ * @param {function} onError - The function to call if an error occurs.
+ * @returns {function} - The unsubscribe function for the listener.
+ */
+export const onAllComplaintsChange = (callback, onError) => {
+  // Query to get all complaints, ordered by 'createdAt' descending
+  const q = query(
+    collection(db, 'complaints'),
+    orderBy('createdAt', 'desc')
+  );
+
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const complaints = querySnapshot.docs.map(doc => ({ 
+      id: doc.id, 
+      ...doc.data() 
+    }));
+    
+    // "Null-safe" sort just in case
+    const sortedComplaints = complaints.sort((a, b) => {
+      const aDate = a.createdAt ? a.createdAt.toDate() : new Date(0);
+      const bDate = b.createdAt ? b.createdAt.toDate() : new Date(0);
+      return bDate - aDate;
+    });
+
+    callback(sortedComplaints); // Send the sorted list to the component
+    
+  }, (error) => {
+    console.error("Error in all complaints listener: ", error);
+    onError(error); // Pass the error to the component
+  });
+
+  return unsubscribe;
+};
+// --- END OF NEW FUNCTION ---
 
 /**
  * Updates the status and resolution details of a complaint (for admin).

@@ -171,6 +171,10 @@ function WardenDashboard() {
             <p>Approved</p>
             <h4>{summary.approvedLeaves}</h4>
           </div>
+          <div className="summary-item card">
+            <p>Rejected</p>
+            <h4>{summary.rejectedLeaves}</h4>
+          </div>
         </div>
       </div>
 
