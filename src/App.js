@@ -19,6 +19,7 @@ import LoginPage from './app/login/page';
 import StudentDashboard from './app/student/dashboard/page';
 import StudentLeavesPage from './app/student/leaves/page';
 import StudentComplaintsPage from './app/student/complaints/page';
+import StudentMessMenu from './app/student/messmenu/page';
 import MessFeedbackPage from './app/student/messfeedback/page';
 
 // Admin/Warden Page Components
@@ -26,6 +27,8 @@ import AdminDashboard from './app/admin/dashboard/page';
 import WardenUsersPage from './app/admin/users/page'; // This is the Warden's page
 import AdminLeaves from './app/admin/leaves/page';
 import AdminComplaints from './app/admin/complaints/page';
+import WardenMessMenu from './app/admin/messmenu/page';
+import WardenMessSuggestions from './app/admin/messsuggestions/page';
 import WardenMessFeedbackPage from './app/admin/messfeedback/page.jsx';
 
 // Superuser Page Components
@@ -103,6 +106,10 @@ function App() {
           element={<ProtectedRoute role="student"><StudentComplaintsPage /></ProtectedRoute>} 
         />
         <Route 
+              path="/student/messmenu" 
+              element={<ProtectedRoute role="student"><StudentMessMenu /></ProtectedRoute>} 
+        />
+        <Route 
               path="/student/messfeedback" 
               element={<ProtectedRoute role="student"><MessFeedbackPage /></ProtectedRoute>} 
         />
@@ -123,6 +130,14 @@ function App() {
         <Route 
           path="/warden/complaints" 
           element={<ProtectedRoute role="warden"><AdminComplaints /></ProtectedRoute>} 
+        />
+        <Route 
+              path="/warden/messmenu" 
+              element={<ProtectedRoute role="warden"><WardenMessMenu /></ProtectedRoute>} 
+        />
+        <Route 
+              path="/warden/messsuggestions" 
+              element={<ProtectedRoute role="warden"><WardenMessSuggestions /></ProtectedRoute>} 
         />
         <Route 
               path="/warden/messfeedback" 
