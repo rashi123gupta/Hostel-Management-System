@@ -1,6 +1,7 @@
 // src/context/AuthContext.jsx
 import React, { useContext, useState, useEffect } from "react";
-import { auth, db, messagingPromise } from "../services/firebase";
+import { auth, db } from "../services/firebase";
+// import { messagingPromise } from "../services/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { onSnapshot, doc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
 import { getToken } from "firebase/messaging";
@@ -73,34 +74,34 @@ export function AuthProvider({ children }) {
               setUserProfile({ id: snapshot.id, ...profile });
               setAuthError(null);
 
-              if (profile.role === "student" && !tokenSynced) {
-                try {
-                  setTokenSynced(true);
+              // if (profile.role === "student" && !tokenSynced) {
+              //   try {
+              //     setTokenSynced(true);
 
-                  const messaging = await messagingPromise;
-                  if (!messaging) return;
+              //     const messaging = await messagingPromise;
+              //     if (!messaging) return;
 
-                  const permission = await Notification.requestPermission();
-                  if (permission !== "granted") return;
+              //     const permission = await Notification.requestPermission();
+              //     if (permission !== "granted") return;
 
-                  const vapidKey =
-                    "BBQ39RkS5fQc-prILv7_Bz5B6FS_dvRoSUvoOhq0Jc7RegtYSRFf1SWhY-I8iq7cjxi2gly0lUVK8D0Zuu56kQ8";
-                  const newToken = await getToken(messaging, { vapidKey });
-                  if (!newToken) return;
+              //     const vapidKey =
+              //       "BBQ39RkS5fQc-prILv7_Bz5B6FS_dvRoSUvoOhq0Jc7RegtYSRFf1SWhY-I8iq7cjxi2gly0lUVK8D0Zuu56kQ8";
+              //     const newToken = await getToken(messaging, { vapidKey });
+              //     if (!newToken) return;
 
-                  const docSnap = await getDoc(docRef);
-                  const existingTokens =
-                    (docSnap.exists() ? docSnap.data().deviceTokens : []) || [];
-                  const uniqueTokens = Array.from(new Set(existingTokens));
+              //     const docSnap = await getDoc(docRef);
+              //     const existingTokens =
+              //       (docSnap.exists() ? docSnap.data().deviceTokens : []) || [];
+              //     const uniqueTokens = Array.from(new Set(existingTokens));
 
-                  if (!uniqueTokens.includes(newToken)) {
-                    await updateDoc(docRef, { deviceTokens: [newToken] });
-                    console.log("✅ Token saved to Firestore");
-                  }
-                } catch (err) {
-                  if (isMounted) console.error("FCM token error:", err);
-                }
-              }
+              //     if (!uniqueTokens.includes(newToken)) {
+              //       await updateDoc(docRef, { deviceTokens: [newToken] });
+              //       console.log("✅ Token saved to Firestore");
+              //     }
+              //   } catch (err) {
+              //     if (isMounted) console.error("FCM token error:", err);
+              //   }
+              // }
 
               if (isMounted) setLoading(false);
             } catch (err) {

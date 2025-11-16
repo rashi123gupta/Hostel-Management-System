@@ -3,7 +3,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { messagingPromise } from "./services/firebase";
+// import { messagingPromise } from "./services/firebase";
 import { onMessage } from "firebase/messaging";
 
 
@@ -37,7 +37,7 @@ import SuperuserUsersPage from './app/superuser/users/page.jsx';
 
 
 
-let onMessageListenerAdded = false;
+// let onMessageListenerAdded = false;
 
 /**
  * A component that intelligently redirects logged-in users to their
@@ -65,22 +65,22 @@ function DashboardRedirect() {
 }
 
 function App() {
-  React.useEffect(() => {
-  if (onMessageListenerAdded) return;
-  onMessageListenerAdded = true;
+//   React.useEffect(() => {
+//   if (onMessageListenerAdded) return;
+//   onMessageListenerAdded = true;
 
-  messagingPromise.then((messaging) => {
-    if (!messaging) return;
+//   messagingPromise.then((messaging) => {
+//     if (!messaging) return;
 
-    onMessage(messaging, (payload) => {
-      const n = payload?.notification;
-      if (n?.title) {
-        alert(`${n.title}\n${n.body || ""}`);
-        console.log("📩 onMessage listener attached");
-      }
-    });
-  });
-}, []);
+//     onMessage(messaging, (payload) => {
+//       const n = payload?.notification;
+//       if (n?.title) {
+//         alert(`${n.title}\n${n.body || ""}`);
+//         console.log("📩 onMessage listener attached");
+//       }
+//     });
+//   });
+// }, []);
 
 
   return (
