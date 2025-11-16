@@ -82,9 +82,11 @@ function WardenUsersPage() {
     <div className="page-container">
       <div className="page-header">
         <h1>Manage Students</h1>
+        {/*
         <button onClick={() => setIsAddModalOpen(true)} className="btn-primary">
           Add New Student
         </button>
+        */}
       </div>
 
       <div className="tab-container warden-tabs">

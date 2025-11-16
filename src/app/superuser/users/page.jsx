@@ -97,11 +97,13 @@ function SuperuserUsersPage() {
     <div className="page-container">
       <div className="page-header">
         <h1>Manage Users</h1>
+        {/*
         {viewRole === 'warden' && (
           <button onClick={() => setIsAddModalOpen(true)} className="btn-primary">
             Add New Warden
           </button>
         )}
+        */}
       </div>
 
       <div className="tab-container">
