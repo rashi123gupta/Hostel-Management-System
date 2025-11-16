@@ -24,6 +24,12 @@ function toDateSafe(ts) {
   return null;
 }
 
+  const formatDate = (timestamp) => {
+      if (timestamp && typeof timestamp.toDate === 'function') {
+        return timestamp.toDate().toLocaleDateString('en-GB'); // DD/MM/YYYY
+      }
+      return 'N/A';
+  };
 
 export default function WardenMessSuggestions() {
   const [suggestions, setSuggestions] = useState([]);
@@ -123,7 +129,6 @@ export default function WardenMessSuggestions() {
           </select>
         </div>
       </div>
-
       {/* --- MODIFICATION: Show error if one occurs --- */}
       {error && <p className="error-message">{error}</p>}
 
@@ -157,11 +162,7 @@ export default function WardenMessSuggestions() {
               ) : (
                 filtered.map((item) => (
                   <tr key={item.id}>
-                    <td>
-                      {toDateSafe(item.submittedAt)
-                        ? toDateSafe(item.submittedAt).toLocaleString()
-                        : "-"}
-                    </td>
+                    <td>{formatDate(item.submittedAt)}</td>
                     <td>{item.studentName || "-"}</td>
                     <td>{item.rollNo ?? "-"}</td>
                     <td style={{ maxWidth: 300, whiteSpace: "normal" }}>

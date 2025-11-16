@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getAllLeaves, updateLeaveStatus } from '../../../services/leaveService';
+// --- MODIFICATION: Import the new listener ---
+import { onAllLeavesChange, updateLeaveStatus } from '../../../services/leaveService';
 import { getAllUsers } from '../../../services/userService';
 
 function AdminLeaves() {
   const [leaves, setLeaves] = useState([]);
-  const [users, setUsers] = useState({}); // This will store our map of users
+  const [users, setUsers] = useState({}); 
   const [leaveStatus, setLeaveStatus] = useState({});
   const [remarks, setRemarks] = useState({});
   const [showModal, setShowModal] = useState(false);
@@ -12,68 +13,69 @@ function AdminLeaves() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchLeavesAndUsers = useCallback(async () => {
-    setLoading(true);
+  // --- MODIFICATION: This function just fetches the user map now ---
+  const fetchUsers = useCallback(async () => {
+    // This only needs to run once.
     try {
-      const [fetchedLeaves, fetchedUsers] = await Promise.all([
-        getAllLeaves(),
-        getAllUsers(),
-      ]);
-
-      // Create a map of users for easy lookup by their ID
+      const fetchedUsers = await getAllUsers();
       const userMap = fetchedUsers.reduce((map, user) => {
         map[user.id] = user;
         return map;
       }, {});
-      
-      setUsers(userMap); 
-
-      // --- MODIFICATION: Sort leaves by date (newest first) ---
-      const sortedLeaves = fetchedLeaves.sort((a, b) => {
-        // "Null-safe" check for the 'appliedAt' timestamp
-        const aDate = a.appliedAt ? a.appliedAt.toDate() : new Date(0);
-        const bDate = b.appliedAt ? b.appliedAt.toDate() : new Date(0);
-        return bDate - aDate; // Sort descending (b - a)
-      });
-      // --- END MODIFICATION ---
-
-      // Save the newly sorted list to state
-      setLeaves(sortedLeaves);
-      
-      // Initialize local state for statuses and remarks from the sorted data
-      const initialStatus = sortedLeaves.reduce((acc, leave) => {
-        acc[leave.id] = leave.status;
-        return acc;
-      }, {});
-      setLeaveStatus(initialStatus);
-
-      const initialRemarks = sortedLeaves.reduce((acc, leave) => {
-        acc[leave.id] = leave.adminRemarks || '';
-        return acc;
-      }, {});
-      setRemarks(initialRemarks);
-
+      setUsers(userMap);
     } catch (err) {
-      setError('Failed to fetch leave data.');
-      console.error("Error fetching leaves:", err);
-    } finally {
-      setLoading(false);
+      console.error("Error fetching users:", err);
+      setError('Failed to fetch user data. Leaves may not show names.');
     }
   }, []);
 
+  // --- MODIFICATION: This useEffect now sets up the real-time listener ---
   useEffect(() => {
-    fetchLeavesAndUsers();
-  }, [fetchLeavesAndUsers]);
+    setLoading(true);
+    // Fetch the user map first
+    fetchUsers();
+
+    // Set up the real-time listener for leaves
+    const unsubscribe = onAllLeavesChange(
+      (sortedLeaves) => {
+        // This is the success callback
+        setLeaves(sortedLeaves);
+
+        // We still need to initialize the local state for statuses/remarks
+        const initialStatus = sortedLeaves.reduce((acc, leave) => {
+          acc[leave.id] = leave.status;
+          return acc;
+        }, {});
+        setLeaveStatus(initialStatus);
+
+        const initialRemarks = sortedLeaves.reduce((acc, leave) => {
+          acc[leave.id] = leave.adminRemarks || '';
+          return acc;
+        }, {});
+        setRemarks(initialRemarks);
+
+        setLoading(false);
+      },
+      (err) => {
+        // This is the error callback
+        console.error(err);
+        setError('Failed to load leave requests.');
+        setLoading(false);
+      }
+    );
+
+    // Cleanup function runs when component unmounts
+    return () => {
+      unsubscribe();
+    };
+  }, [fetchUsers]); // Run this effect only once on mount
 
   const handleStatusChange = async (leaveId, newStatus) => {
 // ... (existing code is correct) ...
     try {
       const remarksForLeave = remarks[leaveId] || '-';
       await updateLeaveStatus(leaveId, newStatus, remarksForLeave);
-      
-      // Update local state to immediately reflect the change
       setLeaveStatus(prev => ({ ...prev, [leaveId]: newStatus }));
-      
       alert(`Leave status updated successfully!`);
     } catch (err) {
       console.error("Error updating leave status:", err);
@@ -112,6 +114,7 @@ function AdminLeaves() {
 
   return (
     <div className="page-container">
+{/* ... (existing code is correct) ... */}
       <div className="page-header">
         <h1>Manage Leaves</h1>
       </div>
@@ -119,12 +122,13 @@ function AdminLeaves() {
         {leaves.length > 0 ? (
           <table className="data-table">
             <thead>
+{/* ... (existing code is correct) ... */}
               <tr>
-                {/* --- MODIFICATION: Added Date column --- */}
                 <th>Applied On</th>
                 <th>Student Name</th>
                 <th>Roll No</th>
                 <th>From Date</th>
+{/* ... (existing code is correct) ... */}
                 <th>To Date</th>
                 <th>Reason</th>
                 <th>Status</th>
@@ -132,10 +136,8 @@ function AdminLeaves() {
               </tr>
             </thead>
             <tbody>
-              {/* This list is now pre-sorted by date */}
               {leaves.map(leave => {
-                const student = users[leave.studentId]; // Find the student from the map
-                // --- MODIFICATION: Added formatDate helper ---
+                const student = users[leave.studentId]; 
                 const formatDate = (timestamp) => {
                   if (timestamp && typeof timestamp.toDate === 'function') {
                     return timestamp.toDate().toLocaleDateString('en-GB');
@@ -144,11 +146,11 @@ function AdminLeaves() {
                 };
                 return (
                   <tr key={leave.id}>
-                    {/* --- MODIFICATION: Added Date cell --- */}
                     <td>{formatDate(leave.appliedAt)}</td>
                     <td>{student?.name || 'N/A'}</td>
                     <td>{student?.rollNo || 'N/A'}</td>
                     <td>{leave.fromDate}</td>
+{/* ... (existing code is correct) ... */}
                     <td>{leave.toDate}</td>
                     <td>{leave.reason}</td>
                     <td>
